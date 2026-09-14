@@ -1,8 +1,10 @@
 # zcash
 
-Shielded [ZIP-321](https://zips.z.cash/zip-0321) invoices for [Rill](https://userill.com). Optional last mile on [lomi.](https://lomi.africa).
+Shielded [ZIP-321](https://zips.z.cash/zip-0321) invoices for [Rill](https://userill.com).
 
-**Rill** is the agent payment control plane: humans fund, agents Accept and Spend (MPP / x402 today). This repository adds a shielded `zcash:` invoice so an agent can pay a Rill pay link without a public graph. **lomi.** is the same-company UEMOA PSP (Wave, MTN, SPI). Fiat last mile is later, not the product.
+**Rill** is the agent payment control plane: humans fund, agents Accept and Spend (MPP / x402 today). This repository adds a shielded `zcash:` invoice so an agent can pay a Rill pay link without a public graph.
+
+We also have [lomi.](https://lomi.africa). Last mile lab: [lomiafrica/zcash](https://github.com/lomiafrica/zcash). Fiat last mile is later, not this product.
 
 Merchants and agents never hold spend keys. The seller watches with a viewing key. We do not issue a token. This is not a ZEC checkout and not a Wave exchange.
 
@@ -15,9 +17,7 @@ Not wired to live Rill or lomi. APIs until the invoice path is proven.
 | Product | URL | Role |
 | --- | --- | --- |
 | Rill | https://userill.com | Agent Accept. ZIP-321 is the new rail. |
-| lomi. | https://lomi.africa | Fiat last mile later. Wave, MTN, SPI. |
-
-Company: lomi.africa S.A.R.L., Abidjan.
+| lomi. | https://github.com/lomiafrica/zcash | Last mile lab. Site: https://lomi.africa |
 
 ## What ships here
 
@@ -25,7 +25,7 @@ Company: lomi.africa S.A.R.L., Abidjan.
 - Outbound regtest hop (`pnpm hop`) as a shielded send proof.
 - Fail closed if there is no address and no hop.
 
-Not in v0: view-key scanner, Rill production 402, HSM, or live PSP payouts.
+Not in v0: view-key scanner, Rill production 402, HSM, or live last-mile payouts.
 
 ## Setup
 

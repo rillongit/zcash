@@ -1,7 +1,7 @@
 {
-  "name": "@lomi./zcash",
+  "name": "@userill/zcash",
   "version": "0.1.0",
-  "description": "Shielded ZIP-321 invoices for Rill Accept, with optional lomi. last mile",
+  "description": "Shielded ZIP-321 invoices for Rill Accept",
   "private": false,
   "license": "MIT",
   "type": "module",

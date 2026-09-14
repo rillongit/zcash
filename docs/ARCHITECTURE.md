@@ -1,6 +1,6 @@
 # Architecture
 
-Rill Accept challenge on Zcash. Fiat last mile on lomi. is optional and last.
+Rill Accept challenge on Zcash. Fiat last mile on [lomi.](https://github.com/lomiafrica/zcash) is optional and last.
 
 ## Flow
 
@@ -19,7 +19,7 @@ Rill Accept challenge on Zcash. Fiat last mile on lomi. is optional and last.
 | Viewing key scan | Detect paid without spend authority |
 | Wave / MTN / SPI | Optional last mile after confirm |
 
-ZEC is not a merchant `currency_code` on the live PSP. There is no public `POST /payouts` rail and no production Rill `zip321` rail until the lab invoice is proven.
+There is no production Rill `zip321` rail until the lab invoice is proven. lomi. last mile stays in [lomiafrica/zcash](https://github.com/lomiafrica/zcash).
 
 ## Guardrails
 
