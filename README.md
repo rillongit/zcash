@@ -4,7 +4,7 @@ Shielded [ZIP-321](https://zips.z.cash/zip-0321) invoices for [Rill](https://use
 
 **Rill** is the agent payment control plane: humans fund, agents Accept and Spend (MPP / x402 today). This repository adds a shielded `zcash:` invoice so an agent can pay a Rill pay link without a public graph.
 
-We also have [lomi.](https://lomi.africa). Last mile lab: [lomiafrica/zcash](https://github.com/lomiafrica/zcash). Fiat last mile is later, not this product.
+We also have [lomi.](https://lomi.africa). Fiat last mile is later, not this product.
 
 Merchants and agents never hold spend keys. The seller watches with a viewing key. We do not issue a token. This is not a ZEC checkout and not a Wave exchange.
 
@@ -17,7 +17,7 @@ Not wired to live Rill or lomi. APIs until the invoice path is proven.
 | Product | URL | Role |
 | --- | --- | --- |
 | Rill | https://userill.com | Agent Accept. ZIP-321 is the new rail. |
-| lomi. | https://github.com/lomiafrica/zcash | Last mile lab. Site: https://lomi.africa |
+| lomi. | https://lomi.africa | Optional last mile later. |
 
 ## What ships here
 
