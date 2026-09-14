@@ -1,28 +1,29 @@
 # Architecture
 
-Custodial correspondent hop on Zcash. Fiat last mile stays on lomi.
+Rill Accept challenge on Zcash. Fiat last mile on lomi. is optional and last.
 
 ## Flow
 
-1. Merchant already collected XOF on Wave, MTN, cards, or SPI.
-2. Treasury holds a shielded omnibus address. Merchants never receive keys.
-3. Inbound ZEC lands on that address. Memo carries `payout_id`.
-4. Reconcile that id. Then pay the last mile as Wave, MTN, or SPI.
+1. Agent calls a Rill pay link (`GET /r/{id}`) with no receipt.
+2. Gate returns 402 plus a ZIP-321 URI: unified address, amount, memo = `resource_id`.
+3. Human Zashi (or a later Spend path) pays shielded. Server holds a viewing key only.
+4. Reconcile the memo. Unlock with a receipt (`rcpt_zcash_*`).
+5. Later, if the seller wants XOF, lomi. pays Wave, MTN, or SPI. That last mile is not private.
 
 ## Mapping
 
 | App | Production analogue |
 | --- | --- |
-| Shielded omnibus | Custodial treasury |
-| Memo = `payout_id` | Ledger key for the last-mile payout |
-| Transparent spend to a merchant wallet | Not this product |
-| Wave / MTN / SPI | Last mile |
+| ZIP-321 URI | Rill 402 payment terms |
+| Memo = `resource_id` | Receipt / ledger key |
+| Viewing key scan | Detect paid without spend authority |
+| Wave / MTN / SPI | Optional last mile after confirm |
 
-ZEC is not a merchant `currency_code` on the live PSP. There is no public `POST /payouts` rail until an allowlisted test org exists.
+ZEC is not a merchant `currency_code` on the live PSP. There is no public `POST /payouts` rail and no production Rill `zip321` rail until the lab invoice is proven.
 
 ## Guardrails
 
-- Shielded receive. Not a transparent-only demo.
+- Shielded receive. Memo requires a unified or Sapling address.
+- ZIP-321 URIs use `zcash:` not `zcash://`.
 - New mainnet addresses. Never reuse testnet secrets.
-- No ZEC balance on merchant `accounts`.
-- Fail closed if the hop is missing or the memo is missing.
+- Fail closed if the hop or invoice cannot be built.

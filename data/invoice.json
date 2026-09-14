@@ -1,0 +1,11 @@
+{
+  "resource_id": "22057799-8c8c-4d07-8b69-047f1dcd5a0e",
+  "amount_zec": "0.001",
+  "address": "uregtest1ma4nrsg5fn6ucrguedj7k08tyk48tsaru4m8f02syrwgdgfap5zhkwkwvuzcegtecwk29m7e3u6hgvcwuc7sx802egc3dem4z532w6cd5978uau9n8h3c2gg9shjxpwevs8nu4qmadtew6qcztdn4cyx3a7pqqa0576nm9gquvjfw3sng5e57fupnvmxmpgkyq7y62gc2rccvjetucj",
+  "uri": "zcash:uregtest1ma4nrsg5fn6ucrguedj7k08tyk48tsaru4m8f02syrwgdgfap5zhkwkwvuzcegtecwk29m7e3u6hgvcwuc7sx802egc3dem4z532w6cd5978uau9n8h3c2gg9shjxpwevs8nu4qmadtew6qcztdn4cyx3a7pqqa0576nm9gquvjfw3sng5e57fupnvmxmpgkyq7y62gc2rccvjetucj?amount=0.001&memo=MjIwNTc3OTktOGM4Yy00ZDA3LThiNjktMDQ3ZjFkY2Q1YTBl&message=Rill%20ZIP-321%20Accept%20invoice",
+  "memo": "MjIwNTc3OTktOGM4Yy00ZDA3LThiNjktMDQ3ZjFkY2Q1YTBl",
+  "network": "regtest",
+  "status": "ready",
+  "reason": "ZIP-321 invoice with memo = resource_id. Scan with Zashi. Not a Wave hop. Public Testnet is still milestone 1.",
+  "updatedAt": "2026-09-14T20:26:18.227Z"
+}

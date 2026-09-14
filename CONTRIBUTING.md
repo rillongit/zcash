@@ -1,12 +1,12 @@
 # Contributing
 
-This is the lomi. Zcash payout hop. Keep it small. Do not wire live PSP payouts from here.
+This is the Rill ZIP-321 Accept lab. Keep it small. Do not wire live Rill or lomi. payouts from here.
 
 ## Code
 
 - TypeScript, `pnpm typecheck` before a PR.
-- Shielded receive. Memo = `payout_id`. Merchants never hold keys.
-- Fail closed if the hop cannot run.
+- Shielded ZIP-321 receive. Memo = `resource_id`. Spend keys stay off the server.
+- Fail closed if the invoice cannot be built.
 - Never commit `.env`, `keys/`, `wallet.dat`, or zcashd datadir contents.
 
 ## Git

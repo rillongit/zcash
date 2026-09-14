@@ -5,6 +5,7 @@ keys/
 data/*
 !data/.gitkeep
 !data/testnet-proof.json
+!data/invoice.json
 *.log
 wallet.dat
 /zcash.conf

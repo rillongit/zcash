@@ -1,31 +1,31 @@
 # zcash
 
-Shielded Zcash settlement for [lomi.](https://lomi.africa) and [Rill](https://userill.com).
+Shielded [ZIP-321](https://zips.z.cash/zip-0321) invoices for [Rill](https://userill.com). Optional last mile on [lomi.](https://lomi.africa).
 
-**lomi.** is a live payment processor for francophone West Africa. Merchants collect XOF on Wave, MTN, cards, and bank rails. **Rill** is the agent payment control plane from the same company: humans fund, agents Accept and Spend.
+**Rill** is the agent payment control plane: humans fund, agents Accept and Spend (MPP / x402 today). This repository adds a shielded `zcash:` invoice so an agent can pay a Rill pay link without a public graph. **lomi.** is the same-company UEMOA PSP (Wave, MTN, SPI). Fiat last mile is later, not the product.
 
-This repository is the Zcash app we are shipping. A shielded receive is the correspondent hop. Last mile stays Wave, MTN, or SPI. Merchants never hold keys. We do not issue a token. This is not a ZEC checkout.
+Merchants and agents never hold spend keys. The seller watches with a viewing key. We do not issue a token. This is not a ZEC checkout and not a Wave exchange.
 
-Payout mapping: [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)
+Mapping: [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)
 
-The shielded testnet hop, memo reconcile, and HTTP payout shape land next in this repo. Not wired to lomi. live systems until an allowlisted payout path exists.
+Not wired to live Rill or lomi. APIs until the invoice path is proven.
 
 ## Products
 
 | Product | URL | Role |
 | --- | --- | --- |
-| lomi. | https://lomi.africa | Fiat PSP. Wave, MTN, cards, SPI. |
-| Rill | https://userill.com | Agent Accept (MPP / x402) and Spend. |
+| Rill | https://userill.com | Agent Accept. ZIP-321 is the new rail. |
+| lomi. | https://lomi.africa | Fiat last mile later. Wave, MTN, SPI. |
 
 Company: lomi.africa S.A.R.L., Abidjan.
 
 ## What ships here
 
-- Custodial omnibus. Shielded receive. Memo = `payout_id`.
-- Reconcile against that id. Last mile unchanged.
-- Fail closed until a shielded testnet hop is in `data/testnet-proof.json` (`status: shielded`).
+- ZIP-321 URI. Unified address. Memo = `resource_id`.
+- Outbound regtest hop (`pnpm hop`) as a shielded send proof.
+- Fail closed if there is no address and no hop.
 
-Not in v0: HSM/KMS, mainnet keys, or calls into the live PSP API.
+Not in v0: view-key scanner, Rill production 402, HSM, or live PSP payouts.
 
 ## Setup
 
@@ -33,9 +33,10 @@ Not in v0: HSM/KMS, mainnet keys, or calls into the live PSP API.
 pnpm install
 cp .env.example .env
 pnpm hop
+pnpm invoice
 ```
 
-`pnpm hop` starts local `electriccoinco/zcashd` on **regtest** (Docker Desktop) and sends a shielded Payment with memo = `payout_id`. That is not public Testnet. Public Testnet is the next hop. Without Docker or `ZCASH_CLI`, proof stays `pending`. Do not treat a pending proof as a live hop.
+`pnpm hop` sends a shielded Payment on local **regtest** (Docker). `pnpm invoice` writes a Zashi-scannable `zcash:` URI to `data/invoice.json` using that omnibus address. Neither is public Testnet.
 
 ```bash
 pnpm typecheck
