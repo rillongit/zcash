@@ -7,6 +7,7 @@ data/*
 !data/testnet-proof.json
 *.log
 wallet.dat
-zcash.conf
+/zcash.conf
+!docker/zcash.conf
 zcash-data
 zcash-params

@@ -26,7 +26,15 @@ export function zcli(args: string[]): SpawnSyncReturns<string> {
   }
   return spawnSync(
     "docker",
-    ["exec", CONTAINER, "zcash-cli", "-regtest", ...args],
+    [
+      "exec",
+      CONTAINER,
+      "zcash-cli",
+      "-regtest",
+      "-rpcuser=lomi",
+      "-rpcpassword=regtest",
+      ...args,
+    ],
     { encoding: "utf8", timeout: 120_000 },
   );
 }

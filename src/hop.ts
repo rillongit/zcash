@@ -69,12 +69,58 @@ function waitReady(attempts: number): boolean {
   return false;
 }
 
-function generateTo(address: string, blocks: number): boolean {
-  return rpcText(["generatetoaddress", String(blocks), address]).ok;
+function generateBlocks(blocks: number): boolean {
+  return rpcText(["generate", String(blocks)]).ok;
+}
+
+function saplingZec(account: number): number {
+  const bal = rpcJson<{ pools?: { sapling?: { valueZat?: number } } }>([
+    "z_getbalanceforaccount",
+    String(account),
+  ]);
+  const zat = bal.value?.pools?.sapling?.valueZat ?? 0;
+  return zat / 1e8;
+}
+
+function accountSapling(account: number): { ok: boolean; ua?: string; sapling?: string; out: string } {
+  const created = rpcJson<{ account?: number }>(["z_getnewaccount"]);
+  if (!created.ok && !`${created.out}`.includes("already")) {
+    // z_getnewaccount may fail if we just want an existing account
+  }
+  const addr = rpcJson<{ address?: string }>([
+    "z_getaddressforaccount",
+    String(account),
+  ]);
+  if (!addr.ok || !addr.value?.address) {
+    return { ok: false, out: addr.out };
+  }
+  const receivers = rpcJson<{ sapling?: string }>([
+    "z_listunifiedreceivers",
+    addr.value.address,
+  ]);
+  if (!receivers.ok || !receivers.value?.sapling) {
+    return { ok: false, ua: addr.value.address, out: receivers.out };
+  }
+  return {
+    ok: true,
+    ua: addr.value.address,
+    sapling: receivers.value.sapling,
+    out: addr.out,
+  };
+}
+
+function opidFrom(out: string, value: unknown): string | undefined {
+  if (value && typeof value === "object" && "opid" in value) {
+    const opid = (value as { opid?: string }).opid;
+    if (opid) return opid;
+  }
+  if (typeof value === "string" && value.startsWith("opid-")) return value;
+  const match = out.match(/opid-[0-9a-f-]+/i);
+  return match?.[0];
 }
 
 function waitOp(opid: string): { ok: boolean; txid?: string; out: string } {
-  for (let i = 0; i < 40; i += 1) {
+  for (let i = 0; i < 90; i += 1) {
     const result = rpcJson<Array<{ id?: string; status?: string; result?: { txid?: string }; error?: { message?: string } }>>(
       ["z_getoperationresult", `["${opid}"]`],
     );
@@ -115,75 +161,73 @@ export function runHop(): HopProof {
     );
   }
 
-  const miner = rpcText(["getnewaddress"]);
-  if (!miner.ok || !miner.out) {
-    return pending(`getnewaddress failed: ${miner.out}`, { network: "regtest" });
-  }
-
-  const omnibus = rpcText(["z_getnewaddress", "sapling"]);
-  const merchant = rpcText(["z_getnewaddress", "sapling"]);
-  if (!omnibus.ok || !merchant.ok) {
+  const omnibus = accountSapling(0);
+  const merchant = accountSapling(1);
+  if (!omnibus.ok || !omnibus.ua || !omnibus.sapling || !merchant.ok || !merchant.ua || !merchant.sapling) {
     return pending(
-      `z_getnewaddress failed: ${omnibus.out} ${merchant.out}`,
+      `unified sapling address failed: ${omnibus.out} ${merchant.out}`,
       { network: "regtest" },
     );
   }
 
-  if (!generateTo(miner.out, 101)) {
-    return pending("generatetoaddress 101 failed", {
-      network: "regtest",
-      omnibusAddress: omnibus.out,
-      merchantAddress: merchant.out,
-    });
-  }
+  if (saplingZec(0) < 1.1) {
+    if (!generateBlocks(101)) {
+      return pending("generate 101 failed", {
+        network: "regtest",
+        omnibusAddress: omnibus.ua,
+        merchantAddress: merchant.ua,
+      });
+    }
 
-  const shield = rpcJson<{ opid?: string } | string>([
-    "z_shieldcoinbase",
-    miner.out,
-    omnibus.out,
-  ]);
-  const shieldOp =
-    typeof shield.value === "string"
-      ? shield.value
-      : shield.value?.opid ?? shield.out;
-  if (!shield.ok || !shieldOp) {
-    return pending(`z_shieldcoinbase failed: ${shield.out}`, {
-      network: "regtest",
-      omnibusAddress: omnibus.out,
-      merchantAddress: merchant.out,
-    });
+    // ZIP 317: do not pass a tiny fee, and do not shield every coinbase (limit 0).
+    const shield = rpcJson<Record<string, unknown>>([
+      "z_shieldcoinbase",
+      "*",
+      omnibus.ua,
+      "null",
+      "5",
+      "",
+      "AllowLinkingAccountAddresses",
+    ]);
+    const shieldOp = opidFrom(shield.out, shield.value);
+    if (!shield.ok || !shieldOp) {
+      return pending(`z_shieldcoinbase failed: ${shield.out}`, {
+        network: "regtest",
+        omnibusAddress: omnibus.ua,
+        merchantAddress: merchant.ua,
+      });
+    }
+    const shieldWait = waitOp(shieldOp);
+    if (!shieldWait.ok) {
+      return pending(`z_shieldcoinbase op failed: ${shieldWait.out}`, {
+        network: "regtest",
+        omnibusAddress: omnibus.ua,
+        merchantAddress: merchant.ua,
+      });
+    }
+    generateBlocks(1);
   }
-  const shieldWait = waitOp(shieldOp);
-  if (!shieldWait.ok) {
-    return pending(`z_shieldcoinbase op failed: ${shieldWait.out}`, {
-      network: "regtest",
-      omnibusAddress: omnibus.out,
-      merchantAddress: merchant.out,
-    });
-  }
-  generateTo(miner.out, 1);
 
   const payoutId = randomUUID();
   const memo = payoutIdToMemoHex(payoutId);
   const amounts = JSON.stringify([
-    { address: merchant.out, amount: 1.0, memo },
+    { address: merchant.ua, amount: 1.0, memo },
   ]);
-  const send = rpcJson<{ opid?: string } | string>([
+  const send = rpcJson<Record<string, unknown>>([
     "z_sendmany",
-    omnibus.out,
+    omnibus.ua,
     amounts,
     "1",
-    "0.0001",
+    "null",
     "FullPrivacy",
   ]);
-  const sendOp =
-    typeof send.value === "string" ? send.value : send.value?.opid ?? send.out;
+  const sendOp = opidFrom(send.out, send.value);
   if (!send.ok || !sendOp) {
     return pending(`z_sendmany failed: ${send.out}`, {
       network: "regtest",
       payoutId,
-      omnibusAddress: omnibus.out,
-      merchantAddress: merchant.out,
+      omnibusAddress: omnibus.ua,
+      merchantAddress: merchant.ua,
     });
   }
   const sendWait = waitOp(sendOp);
@@ -191,11 +235,11 @@ export function runHop(): HopProof {
     return pending(`z_sendmany op failed: ${sendWait.out}`, {
       network: "regtest",
       payoutId,
-      omnibusAddress: omnibus.out,
-      merchantAddress: merchant.out,
+      omnibusAddress: omnibus.ua,
+      merchantAddress: merchant.ua,
     });
   }
-  generateTo(miner.out, 1);
+  generateBlocks(1);
 
   return writeProof({
     status: "shielded",
@@ -206,8 +250,8 @@ export function runHop(): HopProof {
     neverUse: NEVER_USE,
     updatedAt: new Date().toISOString(),
     payoutId,
-    omnibusAddress: omnibus.out,
-    merchantAddress: merchant.out,
+    omnibusAddress: omnibus.ua,
+    merchantAddress: merchant.ua,
     txid: sendWait.txid,
   });
 }

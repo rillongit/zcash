@@ -21,6 +21,7 @@ services:
     volumes:
       - zcash-data:/srv/zcashd/.zcash
       - zcash-params:/srv/zcashd/.zcash-params
+      - ./docker/zcash.conf:/srv/zcashd/.zcash/zcash.conf
 
 volumes:
   zcash-data:
