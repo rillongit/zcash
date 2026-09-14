@@ -35,7 +35,12 @@ cp .env.example .env
 pnpm hop
 ```
 
-`pnpm hop` needs `zcash-cli` (or `ZCASH_CLI`) and a testnet RPC. Without that, proof stays `pending`. Do not treat a pending proof as a live hop.
+`pnpm hop` starts local `electriccoinco/zcashd` on **regtest** (Docker Desktop) and sends a shielded Payment with memo = `payout_id`. That is not public Testnet. Public Testnet is the next hop. Without Docker or `ZCASH_CLI`, proof stays `pending`. Do not treat a pending proof as a live hop.
+
+```bash
+pnpm typecheck
+pnpm test
+```
 
 ## License
 

@@ -8,3 +8,5 @@ data/*
 *.log
 wallet.dat
 zcash.conf
+zcash-data
+zcash-params

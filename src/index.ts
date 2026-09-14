@@ -4,3 +4,4 @@ export type {
   ZcashPayoutStatus,
 } from "./payout.js";
 export { runHop } from "./hop.js";
+export { payoutIdToMemoHex } from "./memo.js";

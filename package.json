@@ -11,7 +11,9 @@
   "scripts": {
     "hop": "tsx scripts/hop.ts",
     "proof": "tsx scripts/hop.ts",
-    "typecheck": "tsc --noEmit -p tsconfig.json"
+    "up": "docker compose up -d",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "tsx --test test/memo.test.ts"
   },
   "devDependencies": {
     "@types/node": "^22.20.1",

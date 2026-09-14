@@ -1,0 +1,27 @@
+services:
+  zcashd:
+    image: electriccoinco/zcashd:latest
+    container_name: lomi-zcashd-regtest
+    platform: linux/amd64
+    environment:
+      ZCASHD_NETWORK: regtest
+      ZCASHD_RPCUSER: lomi
+      ZCASHD_RPCPASSWORD: regtest
+      ZCASHD_RPCBIND: 0.0.0.0
+      ZCASHD_ALLOWIP: 0.0.0.0/0
+      ZCASHD_TXINDEX: "1"
+    command:
+      - "-regtest"
+      - "-deprecatedrpc=getnewaddress"
+      - "-deprecatedrpc=z_getnewaddress"
+      - "-deprecatedrpc=z_getbalance"
+      - "-i-am-aware-zcashd-will-be-replaced-by-zebrad-and-zallet-in-2025=1"
+    ports:
+      - "18232:18232"
+    volumes:
+      - zcash-data:/srv/zcashd/.zcash
+      - zcash-params:/srv/zcashd/.zcash-params
+
+volumes:
+  zcash-data:
+  zcash-params:
