@@ -1,11 +1,11 @@
 services:
   zcashd:
     image: electriccoinco/zcashd:latest
-    container_name: lomi-zcashd-regtest
+    container_name: rill-zcashd-regtest
     platform: linux/amd64
     environment:
       ZCASHD_NETWORK: regtest
-      ZCASHD_RPCUSER: lomi
+      ZCASHD_RPCUSER: rill
       ZCASHD_RPCPASSWORD: regtest
       ZCASHD_RPCBIND: 0.0.0.0
       ZCASHD_ALLOWIP: 0.0.0.0/0
@@ -17,12 +17,30 @@ services:
       - "-deprecatedrpc=z_getbalance"
       - "-i-am-aware-zcashd-will-be-replaced-by-zebrad-and-zallet-in-2025=1"
     ports:
-      - "18232:18232"
+      - "127.0.0.1:18232:18232"
     volumes:
       - zcash-data:/srv/zcashd/.zcash
       - zcash-params:/srv/zcashd/.zcash-params
       - ./docker/zcash.conf:/srv/zcashd/.zcash/zcash.conf
 
+  lightwalletd:
+    image: electriccoinco/lightwalletd:v0.4.2
+    container_name: rill-lightwalletd-regtest
+    depends_on:
+      - zcashd
+    command:
+      - --grpc-bind-addr=0.0.0.0:9067
+      - --no-tls-very-insecure
+      - --zcash-conf-path=/srv/lightwalletd/zcash.conf
+      - --data-dir=/var/lib/lightwalletd
+      - --log-file=/dev/stdout
+    ports:
+      - "127.0.0.1:9067:9067"
+    volumes:
+      - ./docker/lightwalletd-zcash.conf:/srv/lightwalletd/zcash.conf:ro
+      - lightwalletd-data:/var/lib/lightwalletd
+
 volumes:
   zcash-data:
   zcash-params:
+  lightwalletd-data:

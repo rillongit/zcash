@@ -1,0 +1,11 @@
+{
+  "source": "fixture",
+  "network": "regtest",
+  "notes": [
+    {
+      "txid": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+      "memo_utf8": "00000000-0000-4000-8000-000000000000",
+      "address": "uregtest1ma4nrsg5fn6ucrguedj7k08tyk48tsaru4m8f02syrwgdgfap5zhkwkwvuzcegtecwk29m7e3u6hgvcwuc7sx802egc3dem4z532w6cd5978uau9n8h3c2gg9shjxpwevs8nu4qmadtew6qcztdn4cyx3a7pqqa0576nm9gquvjfw3sng5e57fupnvmxmpgkyq7y62gc2rccvjetucj"
+    }
+  ]
+}

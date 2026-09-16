@@ -1,0 +1,14 @@
+{
+  "status": "shielded",
+  "network": "regtest",
+  "reason": "Regtest shielded Payment with memo = resource_id (hex on chain, base64url in ZIP-321). Same receive UA as pnpm invoice. Not public Testnet. Public Testnet is milestone 1.",
+  "officialApply": "https://github.com/ZcashCommunityGrants/zcashcommunitygrants/issues/new?template=grant_application.yaml",
+  "neverUse": "https://zcashgranthub.vercel.app/apply",
+  "updatedAt": "2026-09-14T21:00:36.067Z",
+  "resource_id": "c69b98b8-4f69-45a2-adfa-b8d8072b44ad",
+  "memo_hex": "63363962393862382d346636392d343561322d616466612d623864383037326234346164",
+  "memo_base64url": "YzY5Yjk4YjgtNGY2OS00NWEyLWFkZmEtYjhkODA3MmI0NGFk",
+  "receiveAddress": "uregtest18fg9hwm2kf5lt2lalzm2xtry3tay6qp4g6n9w49unmwpsgxpcsuu6fqxuk69g0lmnztljwaj3rs8yup3cp2w7ehdw5hqskvqwmgew6prnsdgtvcrtvd9na0gzgke7ru9734h3h7smx9xcl6z8v8e4s2ms6f56as9gg0h60czsm07c3s4wpsn4tp0frx757jyw33uqhfd6z30k3ayc94",
+  "fundingAddress": "uregtest14jpc9p0286rcmwgez8xwm5d4h80lyvplg7xhquxwl7gdy6r8g6c9h0279qeu535r4qg2wz7p3scq67uthwpw3ekq9saljxapgve9wlatsfzxpjaccws86rzxndfdyhc87t8vwwd6t7sdlt44fdznr45m6qnjj6t99gtc46kgwd93mungk26lqzjppel36dv88ncwy4lcxnaa7h5wxfh",
+  "txid": "e495cb6d132383e80f47170800bf32744fa4d576fba9d5566f056a9f39327059"
+}

@@ -2,7 +2,7 @@ import { spawnSync, type SpawnSyncReturns } from "node:child_process";
 import { join } from "node:path";
 
 const ROOT = process.env.ZCASH_APP_ROOT ?? process.cwd();
-const CONTAINER = "lomi-zcashd-regtest";
+const CONTAINER = "rill-zcashd-regtest";
 
 export function dockerInfoOk(): boolean {
   return spawnSync("docker", ["info"], { encoding: "utf8" }).status === 0;
@@ -31,7 +31,7 @@ export function zcli(args: string[]): SpawnSyncReturns<string> {
       CONTAINER,
       "zcash-cli",
       "-regtest",
-      "-rpcuser=lomi",
+      "-rpcuser=rill",
       "-rpcpassword=regtest",
       ...args,
     ],

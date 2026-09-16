@@ -1,11 +1,9 @@
 import { randomUUID } from "node:crypto";
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { payoutIdToMemoBase64Url } from "./memo.js";
+import { dataDir, invoicePath } from "./paths.js";
+import { readHopProof, type HopProof } from "./proof.js";
 import { buildZip321Uri } from "./zip321.js";
-
-const ROOT = process.env.ZCASH_APP_ROOT ?? process.cwd();
-const DATA = join(ROOT, "data");
 
 export type Zip321Invoice = {
   resource_id: string;
@@ -18,19 +16,6 @@ export type Zip321Invoice = {
   reason: string;
   updatedAt: string;
 };
-
-function proofAddress(): { address?: string; network?: "regtest" | "testnet" } {
-  try {
-    const raw = readFileSync(join(DATA, "testnet-proof.json"), "utf8");
-    const proof = JSON.parse(raw) as {
-      omnibusAddress?: string;
-      network?: "regtest" | "testnet";
-    };
-    return { address: proof.omnibusAddress, network: proof.network };
-  } catch {
-    return {};
-  }
-}
 
 export function createInvoice(input: {
   resourceId: string;
@@ -53,42 +38,72 @@ export function createInvoice(input: {
   };
 }
 
+/** Build the ZIP-321 invoice from a hop proof so memo and receive UA match the send. */
+export function createInvoiceFromHopProof(
+  proof: HopProof,
+  amountZec: string,
+): ReturnType<typeof createInvoice> {
+  const resourceId = proof.resource_id?.trim();
+  const address = proof.receiveAddress?.trim();
+  if (!resourceId || !address) {
+    throw new Error("hop proof is missing resource_id or receiveAddress");
+  }
+  return createInvoice({
+    resourceId,
+    amountZec,
+    address,
+    message: "Rill ZIP-321 Accept invoice",
+  });
+}
+
+function writePending(reason: string): Zip321Invoice {
+  mkdirSync(dataDir(), { recursive: true });
+  const pending: Zip321Invoice = {
+    resource_id: randomUUID(),
+    amount_zec: process.env.ZCASH_INVOICE_AMOUNT?.trim() || "0.001",
+    address: "",
+    uri: "",
+    memo: "",
+    network: "none",
+    status: "pending",
+    reason,
+    updatedAt: new Date().toISOString(),
+  };
+  writeFileSync(invoicePath(), `${JSON.stringify(pending, null, 2)}\n`);
+  return pending;
+}
+
 export function writeInvoice(): Zip321Invoice {
-  mkdirSync(DATA, { recursive: true });
+  mkdirSync(dataDir(), { recursive: true });
   const fromEnv = process.env.ZCASH_INVOICE_ADDRESS?.trim();
-  const proof = proofAddress();
-  const address = fromEnv || proof.address;
-  if (!address) {
-    const pending: Zip321Invoice = {
-      resource_id: randomUUID(),
-      amount_zec: process.env.ZCASH_INVOICE_AMOUNT?.trim() || "0.001",
-      address: "",
-      uri: "",
-      memo: "",
-      network: "none",
-      status: "pending",
-      reason:
-        "No shielded address. Run pnpm hop or set ZCASH_INVOICE_ADDRESS, then pnpm invoice.",
-      updatedAt: new Date().toISOString(),
-    };
-    writeFileSync(join(DATA, "invoice.json"), `${JSON.stringify(pending, null, 2)}\n`);
-    return pending;
+  const proof = readHopProof();
+  const address = fromEnv || proof?.receiveAddress;
+  const resourceId = proof?.resource_id;
+  if (!address || !resourceId) {
+    return writePending(
+      "No bound hop. Run pnpm hop or set ZCASH_INVOICE_ADDRESS after a hop-proof with resource_id, then pnpm invoice.",
+    );
   }
 
   const built = createInvoice({
-    resourceId: randomUUID(),
+    resourceId,
     amountZec: process.env.ZCASH_INVOICE_AMOUNT?.trim() || "0.001",
     address,
     message: "Rill ZIP-321 Accept invoice",
   });
+
   const invoice: Zip321Invoice = {
     ...built,
-    network: proof.network ?? (address.startsWith("uregtest") ? "regtest" : "testnet"),
+    network: proof?.network === "testnet" || proof?.network === "regtest"
+      ? proof.network
+      : address.startsWith("uregtest")
+        ? "regtest"
+        : "testnet",
     status: "ready",
     reason:
-      "ZIP-321 invoice with memo = resource_id. Scan with Zashi. Not a Wave hop. Public Testnet is still milestone 1.",
+      "ZIP-321 invoice with memo = resource_id on the hop receive UA. Not public Testnet. Public Testnet is still milestone 1.",
     updatedAt: new Date().toISOString(),
   };
-  writeFileSync(join(DATA, "invoice.json"), `${JSON.stringify(invoice, null, 2)}\n`);
+  writeFileSync(invoicePath(), `${JSON.stringify(invoice, null, 2)}\n`);
   return invoice;
 }

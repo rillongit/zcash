@@ -1,10 +1,12 @@
-export type {
-  LastMileRail,
-  ZcashPayout,
-  ZcashPayoutStatus,
-} from "./payout.js";
+export type { ZcashPayoutStatus } from "./payout.js";
 export type { Zip321Invoice } from "./invoice.js";
-export { createInvoice, writeInvoice } from "./invoice.js";
+export type { LabReceipt, ReceiptSource } from "./gate.js";
+export type { DecryptedNote, ScanNotesFile, ScanResult } from "./scan.js";
+export { createInvoice, createInvoiceFromHopProof, writeInvoice } from "./invoice.js";
 export { runHop } from "./hop.js";
-export { payoutIdToMemoBase64Url, payoutIdToMemoHex } from "./memo.js";
+export { handleLabGate, decodeZip321Uri } from "./gate.js";
+export { writeLabReceipt } from "./unlock.js";
+export { reconcileNotes, scanInvoice, parseScanNotes } from "./scan.js";
+export { loadScanNotes } from "./sidecar.js";
+export { payoutIdToMemoBase64Url, payoutIdToMemoHex, memoFieldToUtf8 } from "./memo.js";
 export { buildZip321Uri, parseZip321Uri } from "./zip321.js";

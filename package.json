@@ -12,9 +12,13 @@
     "hop": "tsx scripts/hop.ts",
     "proof": "tsx scripts/hop.ts",
     "invoice": "tsx scripts/invoice.ts",
+    "decode": "tsx scripts/decode.ts",
+    "gate": "tsx scripts/gate.ts",
+    "scan": "tsx scripts/scan.ts",
+    "unlock": "tsx scripts/unlock.ts",
     "up": "docker compose up -d",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test": "tsx --test test/memo.test.ts test/zip321.test.ts"
+    "test": "tsx --test --test-concurrency=1 test/*.test.ts"
   },
   "devDependencies": {
     "@types/node": "^22.20.1",

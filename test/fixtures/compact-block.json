@@ -1,0 +1,17 @@
+{
+  "comment": "Compact blocks omit memos (ZIP-307). After a UFVK trial-decrypt hit, fetch the full tx and decrypt the memo. This file is a recorded shape for CI, not a live compact block.",
+  "height": 102,
+  "hash": "fixture-compact-block",
+  "vtx": [
+    {
+      "txid": "e495cb6d132383e80f47170800bf32744fa4d576fba9d5566f056a9f39327059",
+      "outputs": [
+        {
+          "cmu": "00",
+          "ephemeralKey": "00",
+          "ciphertext": "00"
+        }
+      ]
+    }
+  ]
+}

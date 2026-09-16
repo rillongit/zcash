@@ -4,6 +4,7 @@ dist
 keys/
 data/*
 !data/.gitkeep
+!data/hop-proof.json
 !data/testnet-proof.json
 !data/invoice.json
 *.log
@@ -12,3 +13,5 @@ wallet.dat
 !docker/zcash.conf
 zcash-data
 zcash-params
+scanner/target
+*.pem

@@ -1,37 +1,19 @@
 import { randomUUID } from "node:crypto";
-import { mkdirSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
 import { composeUp, dockerInfoOk, zcli } from "./cli.js";
 import { payoutIdToMemoHex } from "./memo.js";
+import {
+  bindMemos,
+  OFFICIAL_APPLY,
+  NEVER_USE,
+  readExistingResourceId,
+  writeHopProof,
+  type HopProof,
+} from "./proof.js";
 
-const ROOT = process.env.ZCASH_APP_ROOT ?? process.cwd();
-const DATA = join(ROOT, "data");
-
-export type HopProof = {
-  status: "pending" | "shielded";
-  network: "regtest" | "testnet" | "none";
-  reason: string;
-  officialApply: string;
-  neverUse: string;
-  updatedAt: string;
-  payoutId?: string;
-  omnibusAddress?: string;
-  merchantAddress?: string;
-  txid?: string;
-};
-
-const OFFICIAL_APPLY =
-  "https://github.com/ZcashCommunityGrants/zcashcommunitygrants/issues/new?template=grant_application.yaml";
-const NEVER_USE = "https://zcashgranthub.vercel.app/apply";
-
-function writeProof(proof: HopProof): HopProof {
-  mkdirSync(DATA, { recursive: true });
-  writeFileSync(join(DATA, "testnet-proof.json"), `${JSON.stringify(proof, null, 2)}\n`);
-  return proof;
-}
+export type { HopProof };
 
 function pending(reason: string, extra: Partial<HopProof> = {}): HopProof {
-  return writeProof({
+  return writeHopProof({
     status: "pending",
     network: extra.network ?? "none",
     reason,
@@ -161,29 +143,31 @@ export function runHop(): HopProof {
     );
   }
 
-  const omnibus = accountSapling(0);
-  const merchant = accountSapling(1);
-  if (!omnibus.ok || !omnibus.ua || !omnibus.sapling || !merchant.ok || !merchant.ua || !merchant.sapling) {
+  const funding = accountSapling(0);
+  const receive = accountSapling(1);
+  if (!funding.ok || !funding.ua || !funding.sapling || !receive.ok || !receive.ua || !receive.sapling) {
     return pending(
-      `unified sapling address failed: ${omnibus.out} ${merchant.out}`,
+      `unified sapling address failed: ${funding.out} ${receive.out}`,
       { network: "regtest" },
     );
   }
 
+  const addresses = {
+    network: "regtest" as const,
+    receiveAddress: receive.ua,
+    fundingAddress: funding.ua,
+  };
+
   if (saplingZec(0) < 1.1) {
     if (!generateBlocks(101)) {
-      return pending("generate 101 failed", {
-        network: "regtest",
-        omnibusAddress: omnibus.ua,
-        merchantAddress: merchant.ua,
-      });
+      return pending("generate 101 failed", addresses);
     }
 
     // ZIP 317: do not pass a tiny fee, and do not shield every coinbase (limit 0).
     const shield = rpcJson<Record<string, unknown>>([
       "z_shieldcoinbase",
       "*",
-      omnibus.ua,
+      funding.ua,
       "null",
       "5",
       "",
@@ -191,31 +175,25 @@ export function runHop(): HopProof {
     ]);
     const shieldOp = opidFrom(shield.out, shield.value);
     if (!shield.ok || !shieldOp) {
-      return pending(`z_shieldcoinbase failed: ${shield.out}`, {
-        network: "regtest",
-        omnibusAddress: omnibus.ua,
-        merchantAddress: merchant.ua,
-      });
+      return pending(`z_shieldcoinbase failed: ${shield.out}`, addresses);
     }
     const shieldWait = waitOp(shieldOp);
     if (!shieldWait.ok) {
-      return pending(`z_shieldcoinbase op failed: ${shieldWait.out}`, {
-        network: "regtest",
-        omnibusAddress: omnibus.ua,
-        merchantAddress: merchant.ua,
-      });
+      return pending(`z_shieldcoinbase op failed: ${shieldWait.out}`, addresses);
     }
     generateBlocks(1);
   }
 
-  const payoutId = randomUUID();
-  const memo = payoutIdToMemoHex(payoutId);
+  const resourceId = readExistingResourceId() ?? randomUUID();
+  const memos = bindMemos(resourceId);
+  const memo = payoutIdToMemoHex(resourceId);
+  const bound = { ...addresses, resource_id: resourceId, ...memos };
   const amounts = JSON.stringify([
-    { address: merchant.ua, amount: 1.0, memo },
+    { address: receive.ua, amount: 1.0, memo },
   ]);
   const send = rpcJson<Record<string, unknown>>([
     "z_sendmany",
-    omnibus.ua,
+    funding.ua,
     amounts,
     "1",
     "null",
@@ -223,35 +201,27 @@ export function runHop(): HopProof {
   ]);
   const sendOp = opidFrom(send.out, send.value);
   if (!send.ok || !sendOp) {
-    return pending(`z_sendmany failed: ${send.out}`, {
-      network: "regtest",
-      payoutId,
-      omnibusAddress: omnibus.ua,
-      merchantAddress: merchant.ua,
-    });
+    return pending(`z_sendmany failed: ${send.out}`, bound);
   }
   const sendWait = waitOp(sendOp);
   if (!sendWait.ok || !sendWait.txid) {
-    return pending(`z_sendmany op failed: ${sendWait.out}`, {
-      network: "regtest",
-      payoutId,
-      omnibusAddress: omnibus.ua,
-      merchantAddress: merchant.ua,
-    });
+    return pending(`z_sendmany op failed: ${sendWait.out}`, bound);
   }
   generateBlocks(1);
 
-  return writeProof({
+  return writeHopProof({
     status: "shielded",
     network: "regtest",
     reason:
-      "Regtest shielded Payment with memo = payout_id. Not public Testnet. Public Testnet is milestone 1.",
+      "Regtest shielded Payment with memo = resource_id (hex on chain, base64url in ZIP-321). Same receive UA as pnpm invoice. Not public Testnet. Public Testnet is milestone 1.",
     officialApply: OFFICIAL_APPLY,
     neverUse: NEVER_USE,
     updatedAt: new Date().toISOString(),
-    payoutId,
-    omnibusAddress: omnibus.ua,
-    merchantAddress: merchant.ua,
+    resource_id: resourceId,
+    memo_hex: memos.memo_hex,
+    memo_base64url: memos.memo_base64url,
+    receiveAddress: receive.ua,
+    fundingAddress: funding.ua,
     txid: sendWait.txid,
   });
 }

@@ -1,10 +1,3 @@
-/** Custodial shielded hop. Merchants never hold keys. Last mile stays Wave, MTN, or SPI. */
-
-export type LastMileRail = "wave" | "mtn" | "spi";
-
-export type ZcashPayout = {
-  payout_id: string;
-  last_mile_rail: LastMileRail;
-};
+/** Last mile is out of this lab. See https://lomi.africa */
 
 export type ZcashPayoutStatus = "pending" | "shielded" | "reconciled" | "failed";

@@ -1,12 +1,5 @@
 {
-  "status": "shielded",
-  "network": "regtest",
-  "reason": "Regtest shielded Payment with memo = payout_id. Not public Testnet. Public Testnet is milestone 1.",
-  "officialApply": "https://github.com/ZcashCommunityGrants/zcashcommunitygrants/issues/new?template=grant_application.yaml",
-  "neverUse": "https://zcashgranthub.vercel.app/apply",
-  "updatedAt": "2026-09-14T17:58:41.431Z",
-  "payoutId": "ea4a24c6-dd17-4233-8b8e-734cf7b085ed",
-  "omnibusAddress": "uregtest1ma4nrsg5fn6ucrguedj7k08tyk48tsaru4m8f02syrwgdgfap5zhkwkwvuzcegtecwk29m7e3u6hgvcwuc7sx802egc3dem4z532w6cd5978uau9n8h3c2gg9shjxpwevs8nu4qmadtew6qcztdn4cyx3a7pqqa0576nm9gquvjfw3sng5e57fupnvmxmpgkyq7y62gc2rccvjetucj",
-  "merchantAddress": "uregtest1wlewnugt3w0g9rel4a6x6cnhplcjgwhvr6n4wveu6zrfg24pa28hxdy64eyf9edfgkl4jn960emh2rj7su9nvqr8ephh899zxvz0wgyx0rzhxn32fxw0scnhx330sqjtr4zgcqmxckhhzdew4fkdcxqxunwuurzjmz2wg7nsv39tahf6fw8k24rkx6mdrezfj9rhzdpxe0x9yulmq2z",
-  "txid": "523cd253a3ce601b2d0d5d8756646a35ef78657e843e5c9b63eb7196e00e3699"
+  "status": "moved",
+  "canonical": "hop-proof.json",
+  "reason": "Renamed to hop-proof.json. This hop is local regtest, not public Testnet."
 }
