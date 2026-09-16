@@ -4,7 +4,7 @@
   "hash": "fixture-compact-block",
   "vtx": [
     {
-      "txid": "e495cb6d132383e80f47170800bf32744fa4d576fba9d5566f056a9f39327059",
+      "txid": "e3260e2ef8e54264b39c634f056e170b5c96b17f8f3ad7717bf34622f6f8cfac",
       "outputs": [
         {
           "cmu": "00",

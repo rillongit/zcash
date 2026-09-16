@@ -5,6 +5,7 @@ This is the Rill ZIP-321 Accept lab. Keep it small. Do not wire live Rill or lom
 ## Code
 
 - TypeScript, `pnpm typecheck` before a PR.
+- Docs live next to the code (`docs/`). Keep README, REVIEW.md, and ARCHITECTURE honest about regtest vs Testnet.
 - Shielded ZIP-321 receive. Memo = `resource_id`. Spend keys stay off the server.
 - Fail closed if the invoice cannot be built.
 - Never commit `.env`, `keys/`, `wallet.dat`, zcashd datadir contents, viewing keys, or spend keys.

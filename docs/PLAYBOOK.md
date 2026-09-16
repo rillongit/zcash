@@ -11,3 +11,5 @@ Lab only. Regtest URIs do not pay on Testnet or mainnet. Production Rill stays M
 7. Unpaid stays **402**. Unknown ids stay **404**.
 
 Reviewers without a scanner may run `pnpm unlock -- --lab-stub`. That is a hop-txid copy, not milestone 2.
+
+HTTP clip: [WALKTHROUGH.md](./WALKTHROUGH.md). Mapping: [RILL-INTEGRATION-CONTRACT.md](./RILL-INTEGRATION-CONTRACT.md).

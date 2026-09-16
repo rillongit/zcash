@@ -21,7 +21,7 @@ pnpm decode
 
 ## With Docker (shielded send)
 
-First `pnpm hop` can take a while while proving params download. After a rpcuser rename, `docker compose down -v` once if an old `lomi` container is still around.
+First `pnpm hop` can take a while while proving params download. After a rpcuser rename, or after adding `lightwalletd=1`, `docker compose down -v` once if an old volume is still around.
 
 ```bash
 pnpm up
@@ -55,4 +55,4 @@ pnpm unlock -- --lab-stub
 
 That copies the hop txid into a receipt with `source: "lab-stub"`. It is **not** lightwalletd / UFVK scan. Compose also starts `lightwalletd` on `127.0.0.1:9067`. Live `--lightwalletd` on the sidecar fails closed until trial-decrypt exists.
 
-Agent steps: [docs/PLAYBOOK.md](./docs/PLAYBOOK.md).
+Agent steps: [docs/PLAYBOOK.md](./docs/PLAYBOOK.md). HTTP clip: [docs/WALKTHROUGH.md](./docs/WALKTHROUGH.md). Phases: [docs/BUILD-PHASES.md](./docs/BUILD-PHASES.md).

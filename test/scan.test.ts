@@ -24,7 +24,7 @@ test("scanner contract: matching memo unlocks, mismatch and empty stay closed", 
   assert.equal(matched.receipt?.resource_id, resourceId);
   assert.equal(
     matched.receipt?.txid,
-    "e495cb6d132383e80f47170800bf32744fa4d576fba9d5566f056a9f39327059",
+    "e3260e2ef8e54264b39c634f056e170b5c96b17f8f3ad7717bf34622f6f8cfac",
   );
 
   const mismatch = loadNotesFromFixture(mismatchPath);
