@@ -25,13 +25,13 @@ Not wired to live Rill or lomi. APIs until the invoice plus view-key path is pro
 
 ## What is in here
 
-- ZIP-321 URI. Unified address. Memo = `resource_id`
-- Outbound regtest hop (`pnpm hop`) as a shielded send proof. Same `resource_id` and receive UA as `pnpm invoice`
-- Local lab 402 (`pnpm gate`) on `:3210`
-- Scanner contract (`pnpm scan`): decrypted memo must match `resource_id`. CI uses recorded fixtures
-- lightwalletd in Compose (`127.0.0.1:9067`). Live UFVK decrypt is not in the sidecar yet
+- ZIP-321 URI. Sapling receive address (or UA sapling receiver). Memo = `resource_id`
+- Outbound regtest hop (`pnpm hop`) as a shielded send proof. Same `resource_id` and receive address as `pnpm invoice`
+- Watch-only zcashd observer: import a sapling viewing key, detect the pay (no own scanner)
+- Local lab 402 (`pnpm gate`) on `:3210` with x402 v2 `accepts[]` (CipherPay dialect 1 `{ payload: { txid } }`)
+- Scan contract (`pnpm scan`): decrypted memo must match `resource_id`. CI uses recorded fixtures
 
-Not in v0: live UFVK trial-decrypt, Rill production 402, HSM, or live last-mile payouts.
+Not in v0: Orchard/UA detection (CipherPay or nerdcash later), Rill production 402, HSM, or live last-mile payouts.
 
 `pnpm install` does not need the Rill monorepo.
 
@@ -51,7 +51,7 @@ pnpm invoice
 pnpm decode
 ```
 
-`pnpm hop` sends a shielded Payment on local **regtest** (Docker). `pnpm invoice` writes a `zcash:` URI to `data/invoice.json` using that receive UA and the same `resource_id`. Neither is public Testnet.
+`pnpm hop` sends a shielded Payment on local **regtest** (Docker payer + watch-only observer). `pnpm invoice` writes a `zcash:` URI to `data/invoice.json` using that receive address and the same `resource_id`. Neither is public Testnet.
 
 Without Docker, skip hop/invoice and use the committed bound pair:
 
@@ -69,23 +69,34 @@ pnpm gate
 
 | Method | Path | Notes |
 | --- | --- | --- |
-| `GET` | `/r/:resource_id` | **402** + `zip321_uri` unpaid. **200** after scan. **404** unknown |
+| `GET` | `/r/:resource_id` | **402** + `zip321_uri` + `accepts[]` unpaid. **200** after settled scan or dialect-1 txid. **404** unknown |
 
 ```json
 {
   "ok": false,
   "error": { "code": "payment_required" },
-  "zip321_uri": "zcash:uregtest1…?amount=0.001&memo=…",
+  "zip321_uri": "zcash:zregtestsapling1…?amount=0.001&memo=…",
   "payment_terms": {
     "resource_id": "…",
     "amount": "0.001",
     "currency_code": "ZEC",
     "rails": ["zip321"]
-  }
+  },
+  "accepts": [
+    {
+      "scheme": "exact",
+      "network": "zcash:regtest",
+      "asset": "ZEC",
+      "amount": "100000",
+      "extra": { "payload_dialects": ["txid"] }
+    }
+  ]
 }
 ```
 
-Paid path: `pnpm scan -- --fixture test/fixtures/scan-notes.match.json`. Reviewer stub: `pnpm unlock -- --lab-stub`.
+Paid path: `GET` with `PAYMENT-SIGNATURE` base64 `{"payload":{"txid":"<hop txid>"}}`, or `pnpm scan` (fixture in CI; observer poll live). Reviewer stub: `pnpm unlock -- --lab-stub` (named stub, never `status: settled`).
+
+Unlock production-style goods only on **settled** (confirmations >= `ZCASH_SETTLED_CONFIRMATIONS`, default 10). `final` stays 402 with `payment_status`.
 
 ## Checks
 
@@ -105,12 +116,12 @@ CI on `main` runs typecheck + test. Tests do not need Docker or proving params.
 | `data/hop-proof.json` | Regtest shielded hop (committed) |
 | `data/testnet-proof.json` | Pointer at `hop-proof.json`. Not public Testnet |
 | `data/receipt.json` | Unlock JSON (gitignored) |
-| `keys/` / `.env` | UFVK and secrets (never commit) |
+| `keys/` / `.env` | Secrets (never commit viewing keys) |
 
 ## Notes
 
-- Fail closed if there is no hop UA: invoice stays `pending`, no fake URI.
-- Compact blocks omit memos (ZIP-307). Live detect fetches the full tx after trial-decrypt.
+- Fail closed if there is no hop receive address: invoice stays `pending`, no fake URI.
+- Detection is watch-only zcashd on regtest (Sapling viewing key). Orchard/UA detection is CipherPay or nerdcash later.
 - Build order: [docs/BUILD-PHASES.md](./docs/BUILD-PHASES.md). Do not add a production Rill rail from this repo.
 
 ## Monorepo

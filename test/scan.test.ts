@@ -8,11 +8,15 @@ import { memoFieldToUtf8, payoutIdToMemoHex } from "../src/memo.js";
 import { parseScanNotes, reconcileNotes, scanInvoice } from "../src/scan.js";
 import { handleLabGate } from "../src/gate.js";
 import { loadNotesFromFixture, loadScanNotes } from "../src/sidecar.js";
+import { notesFromListReceived } from "../src/observer.js";
 
 const matchPath = fileURLToPath(new URL("./fixtures/scan-notes.match.json", import.meta.url));
 const mismatchPath = fileURLToPath(new URL("./fixtures/scan-notes.mismatch.json", import.meta.url));
 const emptyPath = fileURLToPath(new URL("./fixtures/scan-notes.empty.json", import.meta.url));
 const compactPath = fileURLToPath(new URL("./fixtures/compact-block.json", import.meta.url));
+const observerListPath = fileURLToPath(
+  new URL("./fixtures/observer-listreceived.json", import.meta.url),
+);
 
 const resourceId = "c69b98b8-4f69-45a2-adfa-b8d8072b44ad";
 
@@ -57,6 +61,19 @@ test("compact-block fixture records ZIP-307: memos are not in compact outputs", 
   assert.equal("memo" in compact.vtx[0].outputs[0], false);
 });
 
+test("observer z_listreceivedbyaddress fixture maps via notesFromListReceived", () => {
+  const raw = JSON.parse(readFileSync(observerListPath, "utf8"));
+  const notes = notesFromListReceived(raw);
+  assert.equal(notes.length, 1);
+  assert.equal(
+    notes[0]?.txid,
+    "e3260e2ef8e54264b39c634f056e170b5c96b17f8f3ad7717bf34622f6f8cfac",
+  );
+  assert.equal(notes[0]?.memo_utf8, resourceId);
+  assert.equal(notes[0]?.confirmations, 10);
+  assert.equal(notes[0]?.address, "zregtestsapling1w8k5k9k7j6h5g4f3d2s1a0observernote");
+});
+
 test("scan receipt is the only path that 200s the gate without a lab-stub", () => {
   const root = mkdtempSync(join(tmpdir(), "zcash-scan-"));
   process.env.ZCASH_APP_ROOT = root;
@@ -89,24 +106,26 @@ test("scan receipt is the only path that 200s the gate without a lab-stub", () =
   assert.equal(handleLabGate(resourceId).status, 402);
 
   const match = parseScanNotes(JSON.parse(readFileSync(matchPath, "utf8")));
-  const opened = scanInvoice(match.notes);
+  const opened = scanInvoice(match.notes, { observer: "fixture", network: "regtest" });
   assert.equal(opened.status, "unlocked");
+  assert.equal(opened.receipt?.status, "settled");
   const paid = handleLabGate(resourceId);
   assert.equal(paid.status, 200);
   assert.equal(paid.body.source, "scan");
+  assert.equal(paid.body.status, "settled");
   assert.equal(paid.body.txid, match.notes[0]?.txid);
 });
 
-test("sidecar without fixture or UFVK fails closed", () => {
-  const previousUfvk = process.env.ZCASH_UFVK;
+test("sidecar without fixture or invoice fails closed", () => {
+  const previousRoot = process.env.ZCASH_APP_ROOT;
   const previousFixture = process.env.ZCASH_SCAN_FIXTURE;
-  delete process.env.ZCASH_UFVK;
+  const root = mkdtempSync(join(tmpdir(), "zcash-sidecar-"));
+  process.env.ZCASH_APP_ROOT = root;
+  mkdirSync(join(root, "data"), { recursive: true });
   delete process.env.ZCASH_SCAN_FIXTURE;
   assert.throws(() => loadScanNotes(), /No scan notes/);
-  process.env.ZCASH_UFVK = "uview1-not-a-real-key";
-  assert.throws(() => loadScanNotes(), /zcash-scan is missing|trial-decrypt is not in this binary/);
-  if (previousUfvk === undefined) delete process.env.ZCASH_UFVK;
-  else process.env.ZCASH_UFVK = previousUfvk;
+  if (previousRoot === undefined) delete process.env.ZCASH_APP_ROOT;
+  else process.env.ZCASH_APP_ROOT = previousRoot;
   if (previousFixture === undefined) delete process.env.ZCASH_SCAN_FIXTURE;
   else process.env.ZCASH_SCAN_FIXTURE = previousFixture;
 });

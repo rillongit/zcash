@@ -34,7 +34,7 @@ export function writeLabReceipt(): UnlockResult {
   if (proof.receiveAddress && proof.receiveAddress !== invoice.address) {
     return {
       status: "closed",
-      reason: "Hop receive UA does not match invoice address.",
+      reason: "Hop receive address does not match invoice address.",
     };
   }
 

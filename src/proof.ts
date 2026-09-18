@@ -7,6 +7,12 @@ import {
 } from "./paths.js";
 import { payoutIdToMemoBase64Url, payoutIdToMemoHex } from "./memo.js";
 
+export type HopObserver = {
+  node: "zcashd-viewkey";
+  imported: boolean;
+  key_kind: "sapling_extfvk";
+};
+
 export type HopProof = {
   status: "pending" | "shielded";
   network: "regtest" | "testnet" | "none";
@@ -20,6 +26,7 @@ export type HopProof = {
   receiveAddress?: string;
   fundingAddress?: string;
   txid?: string;
+  observer?: HopObserver;
 };
 
 export type HopProofPointer = {
@@ -42,6 +49,18 @@ function asRecord(value: unknown): Record<string, unknown> | null {
 
 function optionalString(value: unknown): string | undefined {
   return typeof value === "string" && value.trim() ? value : undefined;
+}
+
+function parseObserver(value: unknown): HopObserver | undefined {
+  const row = asRecord(value);
+  if (!row) return undefined;
+  if (row.node !== "zcashd-viewkey") return undefined;
+  if (row.key_kind !== "sapling_extfvk") return undefined;
+  return {
+    node: "zcashd-viewkey",
+    imported: row.imported === true,
+    key_kind: "sapling_extfvk",
+  };
 }
 
 /** Normalize current hop-proof.json or a pre-rename testnet-proof.json. */
@@ -76,6 +95,7 @@ export function parseHopProof(raw: unknown): HopProof | null {
     receiveAddress,
     fundingAddress,
     txid: optionalString(row.txid),
+    observer: parseObserver(row.observer),
   };
 }
 

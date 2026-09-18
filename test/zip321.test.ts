@@ -56,3 +56,19 @@ test("createInvoice binds resource_id to the URI memo", () => {
   assert.equal(memoBase64UrlToPayoutId(invoice.memo), resourceId);
   assert.equal(parseZip321Uri(invoice.uri).address, UA);
 });
+
+test("ZIP-321 round-trips a sapling zregtestsapling address", () => {
+  const sapling =
+    "zregtestsapling1w8k5k9k7j6h5g4f3d2s1a0saplingreceiveaddr";
+  const resourceId = "33333333-3333-4333-8333-333333333333";
+  const uri = buildZip321Uri({
+    address: sapling,
+    amount: "0.001",
+    resourceId,
+  });
+  const parsed = parseZip321Uri(uri);
+  assert.equal(parsed.address, sapling);
+  assert.equal(parsed.amount, "0.001");
+  assert.equal(memoBase64UrlToPayoutId(parsed.memo), resourceId);
+  assert.equal(addressAllowsMemo(sapling), true);
+});

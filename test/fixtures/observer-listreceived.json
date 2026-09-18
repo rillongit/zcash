@@ -1,0 +1,13 @@
+[
+  {
+    "txid": "e3260e2ef8e54264b39c634f056e170b5c96b17f8f3ad7717bf34622f6f8cfac",
+    "amount": 1.0,
+    "amountZat": 100000000,
+    "memo": "63363962393862382d346636392d343561322d616466612d623864383037326234346164",
+    "confirmations": 10,
+    "blockheight": 112,
+    "outindex": 0,
+    "change": false,
+    "address": "zregtestsapling1w8k5k9k7j6h5g4f3d2s1a0observernote"
+  }
+]

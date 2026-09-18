@@ -1,11 +1,11 @@
 {
   "resource_id": "c69b98b8-4f69-45a2-adfa-b8d8072b44ad",
   "amount_zec": "0.001",
-  "address": "uregtest18h9xceyajhpkaqceuk4gqsd2x9l2szc89ykd76mkxpy3clr9pkjwm902ecxcu4ndanly0ntp3v42zcw2c5cp8k52tskyq92ewj29jl9f9t3l8u9cnxrrl2jjle27x2mqg6x79ux8kdayqv9c0xrux2hwdudey4aqacqdjlyykhdjc8tfa09svvq05h5s3e7atkha7nwh58svsr84zps",
-  "uri": "zcash:uregtest18h9xceyajhpkaqceuk4gqsd2x9l2szc89ykd76mkxpy3clr9pkjwm902ecxcu4ndanly0ntp3v42zcw2c5cp8k52tskyq92ewj29jl9f9t3l8u9cnxrrl2jjle27x2mqg6x79ux8kdayqv9c0xrux2hwdudey4aqacqdjlyykhdjc8tfa09svvq05h5s3e7atkha7nwh58svsr84zps?amount=0.001&memo=YzY5Yjk4YjgtNGY2OS00NWEyLWFkZmEtYjhkODA3MmI0NGFk&message=Rill%20ZIP-321%20Accept%20invoice",
+  "address": "zregtestsapling1t3ckd75eqcd0swrdmxh7m3ujf6d0045deyxes9c707ud8scj73366wuyp2c7uvnegwn723xn8mt",
+  "uri": "zcash:zregtestsapling1t3ckd75eqcd0swrdmxh7m3ujf6d0045deyxes9c707ud8scj73366wuyp2c7uvnegwn723xn8mt?amount=0.001&memo=YzY5Yjk4YjgtNGY2OS00NWEyLWFkZmEtYjhkODA3MmI0NGFk&message=Rill%20ZIP-321%20Accept%20invoice",
   "memo": "YzY5Yjk4YjgtNGY2OS00NWEyLWFkZmEtYjhkODA3MmI0NGFk",
   "network": "regtest",
   "status": "ready",
-  "reason": "ZIP-321 invoice with memo = resource_id on the hop receive UA. Not public Testnet. Public Testnet is still milestone 1.",
-  "updatedAt": "2026-09-16T14:21:22.645Z"
+  "reason": "ZIP-321 invoice with memo = resource_id on the hop receive address. Not public Testnet. Public Testnet is still milestone 1.",
+  "updatedAt": "2026-09-18T17:20:03.750Z"
 }

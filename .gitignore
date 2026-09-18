@@ -11,7 +11,7 @@ data/*
 wallet.dat
 /zcash.conf
 !docker/zcash.conf
+!docker/zcash-observer.conf
 zcash-data
 zcash-params
-scanner/target
 *.pem

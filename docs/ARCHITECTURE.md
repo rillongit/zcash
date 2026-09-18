@@ -2,18 +2,18 @@
 
 **Repo:** [github.com/rillongit/zcash](https://github.com/rillongit/zcash)  
 **Product:** [Rill](https://userill.com)  
-**Network:** honest **regtest**. Public Testnet is milestone 1 if a node can sync.  
+**Network:** honest **regtest**. Public Testnet is later, against CipherPay `POST /api/x402/v2/verify`.  
 **Grant:** [ZCG issue 425](https://github.com/ZcashCommunityGrants/zcashcommunitygrants/issues/425)
 
 Rill already returns HTTP 402 for unpaid Accept (MPP / x402). This lab adds a shielded `zcash:` invoice so an agent can pay a Rill resource without a public graph. It is not wired to live Rill or lomi. APIs.
 
 ## 1. Goal
 
-- Agent hits `GET /r/{id}` unpaid and gets 402 plus a ZIP-321 URI.
-- Unified address, amount, memo = `resource_id`.
+- Agent hits `GET /r/{id}` unpaid and gets 402 plus a ZIP-321 URI and an x402 v2 `accepts[]` challenge.
+- Sapling address, amount, memo = `resource_id`.
 - Human Zashi (or a later Spend path) pays shielded.
-- Seller watches with a viewing key. Spend keys stay off the server.
-- Unlock is a receipt `{ resource_id, receipt_id, txid }` in the same shape as MPP / x402.
+- Seller watches with a sapling viewing key on a watch-only zcashd observer. Spend keys stay off the server. No own scanner.
+- Unlock is a receipt `{ resource_id, receipt_id, txid, status }` in the same shape as MPP / x402. Production-style goods unlock only on `settled`.
 
 Fiat last mile on [lomi.](https://lomi.africa) is later, not this lab. Production Rill rails stay `mpp | x402 | rill` until this path is proven.
 
@@ -25,26 +25,29 @@ Agent or human
         |
         v
 This lab (regtest)
-  402 + zcash: URI          unpaid
-  200 + receipt JSON        after scan (or named lab stub)
+  402 + zcash: URI + accepts[]     unpaid
+  402 + payment_status             final (seen, not settled)
+  200 + receipt JSON               settled scan or dialect-1 txid
         |
         v
-ZIP-321 (ZIP-316 UA)
+ZIP-321
   memo = resource_id (base64url on the URI, hex on the hop)
         |
         v
-zcashd regtest + lightwalletd (lab compose)
-  outbound hop: pnpm hop
-  inbound detect: UFVK scan (funded; fixture contract today)
+zcashd payer + zcashd observer (compose)
+  outbound hop: pnpm hop (sapling send, export viewing key, import on observer)
+  inbound detect: z_viewtransaction / z_listreceivedbyaddress (no stub scanner)
 ```
 
 | Building block | Role | In this repo |
 | --- | --- | --- |
 | ZIP-321 URI | Payment request | `pnpm invoice` / `data/invoice.json` |
 | Shielded hop | Outbound proof, memo = resource_id | `pnpm hop` / `data/hop-proof.json` |
-| Lab 402 | Rill-shaped challenge | `pnpm gate` |
-| Scan contract | Memo match → receipt | `pnpm scan` + fixtures |
-| UFVK + lightwalletd | Detect pay without spend key | Compose + `scanner/` (live decrypt not in the sidecar yet) |
+| Lab 402 | Rill-shaped x402 v2 challenge | `pnpm gate` |
+| Scan contract | Memo match → settled receipt | `pnpm scan` + fixtures |
+| Watch-only observer | Detect pay without spend key | Compose `zcashd-observer` |
+
+Orchard/UA detection is CipherPay or nerdcash later, not this lab.
 
 ## 3. What runs today
 
@@ -53,36 +56,37 @@ Clone and run without the Rill monorepo.
 | Capability | Status |
 | --- | --- |
 | ZIP-321 URI, memo = resource_id | `pnpm invoice` / `pnpm decode` |
-| Regtest shielded send | `pnpm hop` (Docker) |
+| Regtest shielded send | `pnpm hop` (Docker payer) |
+| Watch-only sapling view-key detect | Compose observer + `z_importviewingkey` |
 | Lab `GET /r/{id}` 402 / 200 | `pnpm gate` |
+| Dialect 1 `{ payload: { txid } }` | `PAYMENT-SIGNATURE` |
 | Scanner contract (fixture notes) | `pnpm scan -- --fixture …` |
-| Live UFVK trial-decrypt | Fail closed (`scanner --lightwalletd`) |
 | Public Testnet explorer tx | Not yet. `data/testnet-proof.json` points at the regtest hop |
-| Production Rill `zip321` rail | Out of scope until view-key reconcile is real |
+| Production Rill `zip321` rail | Out of scope until CipherPay testnet verify |
 
 Reproduce without Docker: `pnpm install && pnpm test && pnpm decode`.  
 Reproduce the 402: `pnpm gate`, then the HTTP table in the README.
 
 ## 4. Settlement flow
 
-1. Bind a hop and invoice so memo and receive UA match (`pnpm hop && pnpm invoice`).
-2. Agent `GET /r/{resource_id}` with no receipt → **402** + `zip321_uri`.
+1. Bind a hop and invoice so memo and receive address match (`pnpm hop && pnpm invoice`).
+2. Agent `GET /r/{resource_id}` with no receipt → **402** + `zip321_uri` + `accepts[]`.
 3. Human pays the URI on a matching network (Zashi). Lab URIs are **regtest**.
-4. Detect: trial-decrypt compact outputs with a UFVK, fetch the full tx (ZIP-307 omits memos), match memo to `resource_id`.
-5. Write `data/receipt.json`. Next GET is **200**.
+4. Detect: observer `z_viewtransaction` / `z_listreceivedbyaddress` with the imported sapling viewing key. Match address, memo = `resource_id`, amount >= expected.
+5. `final` (confirmations >= 1, below threshold) stays **402** with `payment_status`. `settled` writes `data/receipt.json`. Next GET is **200**.
 6. Unknown ids stay **404**. Wrong memo stays **402**.
 
-CI step 4 uses recorded decrypted notes. Live decrypt is milestone 2.
+CI step 4 uses recorded decrypted notes. Live detect uses the observer, not a sidecar crate.
 
 ## 5. ZIP map
 
 | ZIP | Lab | Later |
 | --- | --- | --- |
 | ZIP-321 | `zcash:` URI, unpadded base64url memo | Same on Testnet / mainnet |
-| ZIP-316 | Unified address + UFVK | Server holds UFVK only |
-| ZIP-307 | Compact blocks omit memos | Fetch full tx after a trial-decrypt hit |
+| ZIP-316 | Unified address exists; this lab exports the sapling receiver | Orchard/UA via CipherPay or nerdcash |
+| ZIP-307 | Compact blocks omit memos | Not used; observer is full zcashd |
 
-No `zcash://`. No transparent address with a memo. `zcashd` `z_importviewingkey` does not import unified viewing keys; do not treat RPC watch as M2.
+No `zcash://`. No transparent address with a memo.
 
 ## 6. Data model
 
@@ -90,15 +94,17 @@ Lab files (see README). Receipt shape:
 
 ```
 resource_id, receipt_id, txid, source (scan | lab-stub)
+optional: status (final | settled), confirmations, network, observer
 ```
 
-`source: scan` is the paid path. `source: lab-stub` copies the hop txid for reviewers without a scanner.
+`source: scan` with `status: settled` is the paid path. `source: lab-stub` copies the hop txid for reviewers and never reports settled.
 
 ## 7. Infra
 
-- `zcashd` regtest (`rill-zcashd-regtest`). RPC user `rill`.
-- `lightwalletd` on `127.0.0.1:9067` (lab). Image `v0.4.2` is old: it dies if zcashd mines more than 100 blocks on first sync, and it may fail to parse current zcashd coinbases. Restart it after `pnpm hop`. Compact blocks omit memos (ZIP-307). Live UFVK decrypt is not in the sidecar yet.
-- `scanner/` sidecar: fixture pass-through today; `--lightwalletd` fails closed until `zcash_client_backend` is wired. Never commit `ZCASH_UFVK`.
+- Payer `zcashd` regtest (`rill-zcashd-regtest`). RPC user `rill`. Listens on P2P 18444.
+- Observer `zcashd` (`rill-zcashd-observer`) is watch-only: `-listen=0`, `-connect=zcashd`, host RPC `127.0.0.1:18233`. Shares proving params with the payer. No `lightwalletd`.
+- Hop exports a sapling viewing key on the payer and imports it on the observer (`whenkeyisnew`, height 0). The key is never written under `data/` or logs.
+- Never commit viewing keys or spend keys.
 
 ## 8. Custody
 
@@ -110,10 +116,10 @@ resource_id, receipt_id, txid, source (scan | lab-stub)
 
 See [BUILD-PHASES.md](./BUILD-PHASES.md). Short version:
 
-1. Keep this repo public: invoice, hop proof, decode, lab 402, scanner contract.
-2. UFVK scan against lightwalletd. Paid GET 200 from scan, not a copied txid.
-3. Adapter notes for Rill Accept. No production Spend rewrite in the grant.
-4. Public Testnet hop when a dedicated node can sync. Fail closed until then.
+1. Keep this repo public: invoice, hop proof, decode, lab 402, observer contract.
+2. Reuse detection. Do not write a scanner.
+3. Next: testnet against CipherPay `POST /api/x402/v2/verify`.
+4. Adapter notes for Rill Accept. No production Spend rewrite in the grant.
 
 ## 10. Adapter notes
 

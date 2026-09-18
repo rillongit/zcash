@@ -1,14 +1,19 @@
 {
   "status": "shielded",
   "network": "regtest",
-  "reason": "Regtest shielded Payment with memo = resource_id (hex on chain, base64url in ZIP-321). Same receive UA as pnpm invoice. Not public Testnet. Public Testnet is milestone 1.",
+  "reason": "Regtest shielded Payment with memo = resource_id (hex on chain, base64url in ZIP-321). Same sapling receive address as pnpm invoice. Watch-only observer imported a sapling viewing key. Not public Testnet. Public Testnet is milestone 1.",
   "officialApply": "https://github.com/ZcashCommunityGrants/zcashcommunitygrants/issues/new?template=grant_application.yaml",
   "neverUse": "https://zcashgranthub.vercel.app/apply",
-  "updatedAt": "2026-09-16T14:20:56.528Z",
+  "updatedAt": "2026-09-18T17:19:58.994Z",
   "resource_id": "c69b98b8-4f69-45a2-adfa-b8d8072b44ad",
   "memo_hex": "63363962393862382d346636392d343561322d616466612d623864383037326234346164",
   "memo_base64url": "YzY5Yjk4YjgtNGY2OS00NWEyLWFkZmEtYjhkODA3MmI0NGFk",
-  "receiveAddress": "uregtest18h9xceyajhpkaqceuk4gqsd2x9l2szc89ykd76mkxpy3clr9pkjwm902ecxcu4ndanly0ntp3v42zcw2c5cp8k52tskyq92ewj29jl9f9t3l8u9cnxrrl2jjle27x2mqg6x79ux8kdayqv9c0xrux2hwdudey4aqacqdjlyykhdjc8tfa09svvq05h5s3e7atkha7nwh58svsr84zps",
-  "fundingAddress": "uregtest1n5dr8c53eszs50nv5tpvht2ep6marrtvju9tnvzvq8j5006l77wlhu7ckc85m3ueq6cgxzzjeq3l23xr4hmxqwxlqar9eduj974adg9sx7ph6qd2ysruw9ztthhz6pns4zg4gherhnd4hd68c05a6lzjmnxtyl0nlwcqv5kqu8m3llta6lhjevu8tgq7pfagf535ad8930ekvwwh7zw",
-  "txid": "e3260e2ef8e54264b39c634f056e170b5c96b17f8f3ad7717bf34622f6f8cfac"
+  "receiveAddress": "zregtestsapling1t3ckd75eqcd0swrdmxh7m3ujf6d0045deyxes9c707ud8scj73366wuyp2c7uvnegwn723xn8mt",
+  "fundingAddress": "uregtest18aysuf3z7t4agfp527ra435mnwl43nah454cfv3unpa92kwfpd48cks8qgechmjgtp934ceg45fjyzyfec9u3uzum3lf93l70qscm2wu2l6g9dm80f2ts9qdnyrp4r6m33n77dkwncuusqmwzz2t9hu4w0zpe3vux5c3wvv0tzmhdxkr245l4p3ulul6aws6a5ya7fewqn7pwx9g0u4",
+  "txid": "7b2ce68b3af7d1c61161a45334c0f59c7c51c2ca51baeef93149b83d6624c3ef",
+  "observer": {
+    "node": "zcashd-viewkey",
+    "imported": true,
+    "key_kind": "sapling_extfvk"
+  }
 }

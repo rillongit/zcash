@@ -2,7 +2,7 @@
 
 Rill already runs HTTP 402 Accept (MPP / x402) at [userill.com](https://userill.com). This repository is the ZIP-321 lab for [ZCG issue 425](https://github.com/ZcashCommunityGrants/zcashcommunitygrants/issues/425). It is not a ZEC checkout, not a Wave exchange, and not wired to live Rill.
 
-Public Testnet and live UFVK scan are funded milestones. Today is honest **regtest**. `pnpm unlock` is a lab stub. Paid path is `pnpm scan`.
+Public Testnet and CipherPay verify are later. Today is honest **regtest**. `pnpm unlock` is a named lab stub (never `status: settled`). Paid path is view-key detection: `pnpm scan` or `PAYMENT-SIGNATURE` dialect 1 `{ payload: { txid } }`.
 
 ## Without Docker
 
@@ -19,9 +19,11 @@ pnpm decode
 
 `data/testnet-proof.json` is a pointer to `hop-proof.json` (the hop is not public Testnet).
 
-## With Docker (shielded send)
+CI uses recorded fixtures (`test/fixtures/scan-notes.*.json` and `test/fixtures/observer-listreceived.json`). No Docker, no viewing key.
 
-First `pnpm hop` can take a while while proving params download. After a rpcuser rename, or after adding `lightwalletd=1`, `docker compose down -v` once if an old volume is still around.
+## With Docker (shielded send + observer)
+
+First `pnpm hop` can take a while while proving params download and two amd64 nodes start (payer + watch-only observer). After a rpcuser rename, `docker compose down -v` once if an old volume is still around (that also drops params).
 
 ```bash
 pnpm up
@@ -36,23 +38,30 @@ In another terminal: `pnpm gate`. Then:
 curl -sS "http://127.0.0.1:3210/r/<resource_id>"
 ```
 
-Expect **402** and `zip321_uri`. Copy `resource_id` from `pnpm decode`. Unpaid stays closed.
+Expect **402**, `zip321_uri`, `accepts[]`, and a `PAYMENT-REQUIRED` header. Copy `resource_id` from `pnpm decode`. Unpaid stays closed.
 
-Paid path (memo match from recorded notes; not live UFVK decrypt):
+Paid path (watch-only sapling viewing key on the observer; hop txid):
+
+```bash
+SIG=$(python3 -c 'import json,base64,sys; print(base64.b64encode(json.dumps({"payload":{"txid":sys.argv[1]}}).encode()).decode())' <txid>)
+curl -sS -D - -H "PAYMENT-SIGNATURE: $SIG" "http://127.0.0.1:3210/r/<resource_id>"
+```
+
+Expect **200** with `{ resource_id, receipt_id, txid, source: "scan", status: "settled" }`.
+
+Fixture path (CI / reviewers without Docker):
 
 ```bash
 pnpm scan -- --fixture test/fixtures/scan-notes.match.json
 curl -sS "http://127.0.0.1:3210/r/<resource_id>"
 ```
 
-Expect **200** with `{ resource_id, receipt_id, txid, source: "scan" }`.
-
-Reviewer stub without a scanner:
+Reviewer stub without view-key scan:
 
 ```bash
 pnpm unlock -- --lab-stub
 ```
 
-That copies the hop txid into a receipt with `source: "lab-stub"`. It is **not** lightwalletd / UFVK scan. Compose also starts `lightwalletd` on `127.0.0.1:9067`. Live `--lightwalletd` on the sidecar fails closed until trial-decrypt exists.
+That copies the hop txid into a receipt with `source: "lab-stub"`. It is **not** settled view-key detection.
 
 Agent steps: [docs/PLAYBOOK.md](./docs/PLAYBOOK.md). HTTP clip: [docs/WALKTHROUGH.md](./docs/WALKTHROUGH.md). Phases: [docs/BUILD-PHASES.md](./docs/BUILD-PHASES.md).

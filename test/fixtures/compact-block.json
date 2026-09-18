@@ -1,5 +1,5 @@
 {
-  "comment": "Compact blocks omit memos (ZIP-307). After a UFVK trial-decrypt hit, fetch the full tx and decrypt the memo. This file is a recorded shape for CI, not a live compact block.",
+  "comment": "Compact blocks omit memos (ZIP-307). This lab uses a watch-only zcashd observer instead of compact-block trial-decrypt. This file is a recorded shape for CI, not a live compact block.",
   "height": 102,
   "hash": "fixture-compact-block",
   "vtx": [

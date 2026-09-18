@@ -5,8 +5,8 @@ loadDotenv();
 
 if (!process.argv.includes("--lab-stub")) {
   console.error("pnpm unlock copies the hop txid. That is not view-key reconcile.");
-  console.error("Paid path: pnpm scan");
-  console.error("Reviewer stub without a scanner: pnpm unlock -- --lab-stub");
+  console.error("Paid path: pnpm scan or GET with PAYMENT-SIGNATURE { payload: { txid } }");
+  console.error("Reviewer stub without view-key scan: pnpm unlock -- --lab-stub");
   process.exitCode = 1;
 } else {
   const result = writeLabReceipt();

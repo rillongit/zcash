@@ -12,6 +12,10 @@ services:
       ZCASHD_TXINDEX: "1"
     command:
       - "-regtest"
+      - "-listen=1"
+      - "-bind=0.0.0.0"
+      - "-port=18444"
+      - "-txindex=1"
       - "-deprecatedrpc=getnewaddress"
       - "-deprecatedrpc=z_getnewaddress"
       - "-deprecatedrpc=z_getbalance"
@@ -23,25 +27,36 @@ services:
       - zcash-params:/srv/zcashd/.zcash-params
       - ./docker/zcash.conf:/srv/zcashd/.zcash/zcash.conf
 
-  lightwalletd:
-    image: electriccoinco/lightwalletd:v0.4.2
-    container_name: rill-lightwalletd-regtest
+  zcashd-observer:
+    image: electriccoinco/zcashd:latest
+    container_name: rill-zcashd-observer
     platform: linux/amd64
     depends_on:
       - zcashd
+    environment:
+      ZCASHD_NETWORK: regtest
+      ZCASHD_RPCUSER: rill
+      ZCASHD_RPCPASSWORD: regtest
+      ZCASHD_RPCBIND: 0.0.0.0
+      ZCASHD_ALLOWIP: 0.0.0.0/0
+      ZCASHD_TXINDEX: "1"
     command:
-      - --grpc-bind-addr=0.0.0.0:9067
-      - --no-tls-very-insecure
-      - --zcash-conf-path=/srv/lightwalletd/zcash.conf
-      - --data-dir=/var/lib/lightwalletd
-      - --log-file=/dev/stdout
+      - "-regtest"
+      - "-listen=0"
+      - "-connect=zcashd:18444"
+      - "-txindex=1"
+      - "-deprecatedrpc=getnewaddress"
+      - "-deprecatedrpc=z_getnewaddress"
+      - "-deprecatedrpc=z_getbalance"
+      - "-i-am-aware-zcashd-will-be-replaced-by-zebrad-and-zallet-in-2025=1"
     ports:
-      - "127.0.0.1:9067:9067"
+      - "127.0.0.1:18233:18232"
     volumes:
-      - ./docker/lightwalletd-zcash.conf:/srv/lightwalletd/zcash.conf:ro
-      - lightwalletd-data:/var/lib/lightwalletd
+      - zcash-observer-data:/srv/zcashd/.zcash
+      - zcash-params:/srv/zcashd/.zcash-params
+      - ./docker/zcash-observer.conf:/srv/zcashd/.zcash/zcash.conf
 
 volumes:
   zcash-data:
   zcash-params:
-  lightwalletd-data:
+  zcash-observer-data:

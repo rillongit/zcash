@@ -9,7 +9,7 @@ This is the Rill ZIP-321 Accept lab. Keep it small. Do not wire live Rill or lom
 - Shielded ZIP-321 receive. Memo = `resource_id`. Spend keys stay off the server.
 - Fail closed if the invoice cannot be built.
 - Never commit `.env`, `keys/`, `wallet.dat`, zcashd datadir contents, viewing keys, or spend keys.
-- `ZCASH_UFVK` stays in `.env` only.
+- Detection is the watch-only observer. Do not add a scanner crate.
 
 ## Git
 

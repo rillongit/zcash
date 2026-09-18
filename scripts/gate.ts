@@ -8,6 +8,11 @@ const port = Number(process.env.ZCASH_GATE_PORT?.trim() || "3210");
 const host = process.env.ZCASH_GATE_HOST?.trim() || "127.0.0.1";
 const origin = `http://${host}:${port}`;
 
+function headerValue(value: string | string[] | undefined): string | undefined {
+  if (Array.isArray(value)) return value[0];
+  return value;
+}
+
 const server = createServer((req, res) => {
   const url = new URL(req.url ?? "/", origin);
   const match = url.pathname.match(/^\/r\/([^/]+)\/?$/);
@@ -22,12 +27,18 @@ const server = createServer((req, res) => {
     return;
   }
 
-  const result = handleLabGate(decodeURIComponent(match[1] ?? ""), origin);
-  res.writeHead(result.status, { "content-type": "application/json" });
+  const paymentSignature = headerValue(req.headers["payment-signature"]);
+  const result = handleLabGate(decodeURIComponent(match[1] ?? ""), origin, {
+    paymentSignature,
+  });
+  res.writeHead(result.status, {
+    "content-type": "application/json",
+    ...(result.headers ?? {}),
+  });
   res.end(`${JSON.stringify(result.body, null, 2)}\n`);
 });
 
 server.listen(port, host, () => {
   console.log(`lab 402 on ${origin}/r/{resource_id}`);
-  console.log("Unpaid until data/receipt.json exists (pnpm scan, or pnpm unlock -- --lab-stub).");
+  console.log("Unpaid until a settled view-key receipt exists (PAYMENT-SIGNATURE txid, pnpm scan, or pnpm unlock -- --lab-stub).");
 });

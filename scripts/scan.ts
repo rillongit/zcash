@@ -12,7 +12,8 @@ function fixtureArg(argv: string[]): string | undefined {
 
 try {
   const notes = loadScanNotes(fixtureArg(process.argv));
-  const result = scanInvoice(notes.notes);
+  const observer = notes.source === "zcashd-viewkey" ? "zcashd-viewkey" : "fixture";
+  const result = scanInvoice(notes.notes, { observer, network: notes.network });
   console.log(result.status);
   console.log(result.reason);
   if (result.receipt) console.log(JSON.stringify(result.receipt, null, 2));

@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { composeUp, dockerInfoOk, zcli } from "./cli.js";
+import { composeUp, dockerInfoOk, zcli, type ZcashNode } from "./cli.js";
 import { payoutIdToMemoHex } from "./memo.js";
 import {
   bindMemos,
@@ -24,14 +24,14 @@ function pending(reason: string, extra: Partial<HopProof> = {}): HopProof {
   });
 }
 
-function rpcText(args: string[]): { ok: boolean; out: string } {
-  const result = zcli(args);
+function rpcText(args: string[], node: ZcashNode = "payer"): { ok: boolean; out: string } {
+  const result = zcli(args, node);
   const out = `${result.stdout ?? ""}${result.stderr ?? ""}`.trim();
   return { ok: result.status === 0, out };
 }
 
-function rpcJson<T>(args: string[]): { ok: boolean; value?: T; out: string } {
-  const { ok, out } = rpcText(args);
+function rpcJson<T>(args: string[], node: ZcashNode = "payer"): { ok: boolean; value?: T; out: string } {
+  const { ok, out } = rpcText(args, node);
   if (!ok) return { ok, out };
   try {
     return { ok: true, value: JSON.parse(out) as T, out };
@@ -40,11 +40,11 @@ function rpcJson<T>(args: string[]): { ok: boolean; value?: T; out: string } {
   }
 }
 
-function waitReady(attempts: number): boolean {
+function waitReady(attempts: number, node: ZcashNode = "payer"): boolean {
   for (let i = 0; i < attempts; i += 1) {
-    const ping = rpcText(["getblockchaininfo"]);
+    const ping = rpcText(["getblockchaininfo"], node);
     if (ping.ok) return true;
-    const legacy = rpcText(["getinfo"]);
+    const legacy = rpcText(["getinfo"], node);
     if (legacy.ok) return true;
     Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 3000);
   }
@@ -120,6 +120,65 @@ function waitOp(opid: string): { ok: boolean; txid?: string; out: string } {
   return { ok: false, out: `operation ${opid} timed out` };
 }
 
+function exportViewingKey(address: string): string | undefined {
+  const result = zcli(["z_exportviewingkey", address], "payer");
+  if (result.status !== 0) return undefined;
+  const out = (result.stdout ?? "").trim();
+  try {
+    const parsed = JSON.parse(out);
+    if (typeof parsed === "string" && parsed.trim()) return parsed.trim();
+  } catch {
+    if (out) return out;
+  }
+  return undefined;
+}
+
+function importViewingKey(vk: string): boolean {
+  const result = zcli(["z_importviewingkey", vk, "whenkeyisnew", "0"], "observer");
+  return result.status === 0;
+}
+
+function waitObserverCatchup(attempts: number): boolean {
+  for (let i = 0; i < attempts; i += 1) {
+    const payer = rpcJson<{ blocks?: number }>(["getblockchaininfo"], "payer");
+    const observer = rpcJson<{ blocks?: number }>(["getblockchaininfo"], "observer");
+    const payerBlocks = payer.value?.blocks ?? 0;
+    const observerBlocks = observer.value?.blocks ?? 0;
+    if (payer.ok && observer.ok && payerBlocks > 0 && observerBlocks >= payerBlocks) {
+      return true;
+    }
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 2000);
+  }
+  return false;
+}
+
+function resolveReceiveSapling(): { ok: boolean; sapling?: string; out: string } {
+  const uaReceive = accountSapling(1);
+  if (uaReceive.ok && uaReceive.sapling) {
+    const vk = exportViewingKey(uaReceive.sapling);
+    if (vk) {
+      if (!importViewingKey(vk)) {
+        return { ok: false, out: "observer z_importviewingkey failed" };
+      }
+      return { ok: true, sapling: uaReceive.sapling, out: uaReceive.out };
+    }
+  }
+
+  const created = rpcJson<string>(["z_getnewaddress", "sapling"]);
+  const sapling = typeof created.value === "string" ? created.value.trim() : "";
+  if (!created.ok || !sapling) {
+    return { ok: false, out: created.out || uaReceive.out };
+  }
+  const vk = exportViewingKey(sapling);
+  if (!vk) {
+    return { ok: false, sapling, out: "z_exportviewingkey failed on sapling address" };
+  }
+  if (!importViewingKey(vk)) {
+    return { ok: false, sapling, out: "observer z_importviewingkey failed" };
+  }
+  return { ok: true, sapling, out: created.out };
+}
+
 export function runHop(): HopProof {
   if (!dockerInfoOk() && !process.env.ZCASH_CLI?.trim()) {
     return pending(
@@ -136,25 +195,38 @@ export function runHop(): HopProof {
     }
   }
 
-  if (!waitReady(40)) {
+  if (!waitReady(40, "payer")) {
     return pending(
       "zcashd did not answer getinfo on regtest. First start downloads proving params; retry pnpm hop.",
       { network: "regtest" },
     );
   }
 
-  const funding = accountSapling(0);
-  const receive = accountSapling(1);
-  if (!funding.ok || !funding.ua || !funding.sapling || !receive.ok || !receive.ua || !receive.sapling) {
+  if (!waitReady(80, "observer")) {
     return pending(
-      `unified sapling address failed: ${funding.out} ${receive.out}`,
+      "Watch-only observer zcashd did not answer RPC. Check rill-zcashd-observer and retry pnpm hop.",
       { network: "regtest" },
     );
   }
 
+  const funding = accountSapling(0);
+  if (!funding.ok || !funding.ua || !funding.sapling) {
+    return pending(`unified sapling funding address failed: ${funding.out}`, {
+      network: "regtest",
+    });
+  }
+
+  const receive = resolveReceiveSapling();
+  if (!receive.ok || !receive.sapling) {
+    return pending(`sapling viewing key import failed: ${receive.out}`, {
+      network: "regtest",
+      fundingAddress: funding.ua,
+    });
+  }
+
   const addresses = {
     network: "regtest" as const,
-    receiveAddress: receive.ua,
+    receiveAddress: receive.sapling,
     fundingAddress: funding.ua,
   };
 
@@ -167,7 +239,7 @@ export function runHop(): HopProof {
     const shield = rpcJson<Record<string, unknown>>([
       "z_shieldcoinbase",
       "*",
-      funding.ua,
+      funding.sapling,
       "null",
       "5",
       "",
@@ -189,7 +261,7 @@ export function runHop(): HopProof {
   const memo = payoutIdToMemoHex(resourceId);
   const bound = { ...addresses, resource_id: resourceId, ...memos };
   const amounts = JSON.stringify([
-    { address: receive.ua, amount: 1.0, memo },
+    { address: receive.sapling, amount: 1.0, memo },
   ]);
   const send = rpcJson<Record<string, unknown>>([
     "z_sendmany",
@@ -207,21 +279,35 @@ export function runHop(): HopProof {
   if (!sendWait.ok || !sendWait.txid) {
     return pending(`z_sendmany op failed: ${sendWait.out}`, bound);
   }
-  generateBlocks(1);
+  if (!generateBlocks(10)) {
+    return pending("generate 10 failed", { ...bound, txid: sendWait.txid });
+  }
+
+  if (!waitObserverCatchup(90)) {
+    return pending(
+      "Observer chain height did not catch the payer after the shielded send. Check -connect=zcashd / payer listen flags.",
+      { ...bound, txid: sendWait.txid },
+    );
+  }
 
   return writeHopProof({
     status: "shielded",
     network: "regtest",
     reason:
-      "Regtest shielded Payment with memo = resource_id (hex on chain, base64url in ZIP-321). Same receive UA as pnpm invoice. Not public Testnet. Public Testnet is milestone 1.",
+      "Regtest shielded Payment with memo = resource_id (hex on chain, base64url in ZIP-321). Same sapling receive address as pnpm invoice. Watch-only observer imported a sapling viewing key. Not public Testnet. Public Testnet is milestone 1.",
     officialApply: OFFICIAL_APPLY,
     neverUse: NEVER_USE,
     updatedAt: new Date().toISOString(),
     resource_id: resourceId,
     memo_hex: memos.memo_hex,
     memo_base64url: memos.memo_base64url,
-    receiveAddress: receive.ua,
+    receiveAddress: receive.sapling,
     fundingAddress: funding.ua,
     txid: sendWait.txid,
+    observer: {
+      node: "zcashd-viewkey",
+      imported: true,
+      key_kind: "sapling_extfvk",
+    },
   });
 }
