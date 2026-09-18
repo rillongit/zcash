@@ -113,6 +113,10 @@ CI on `main` runs typecheck + test. Tests do not need Docker or proving params.
 - Compact blocks omit memos (ZIP-307). Live detect fetches the full tx after trial-decrypt.
 - Build order: [docs/BUILD-PHASES.md](./docs/BUILD-PHASES.md). Do not add a production Rill rail from this repo.
 
+## Monorepo
+
+This repo is the public submodule [`rillongit/zcash`](https://github.com/rillongit/zcash) at `apps/zcash` in the private Rill monorepo.
+
 ## License
 
 MIT. See [LICENSE](./LICENSE).
