@@ -77,11 +77,9 @@ export function parseHopProof(raw: unknown): HopProof | null {
   const resourceId =
     optionalString(row.resource_id) ?? optionalString(row.payoutId);
   const receiveAddress =
-    optionalString(row.receiveAddress) ??
-    optionalString(row.merchantAddress);
+    optionalString(row.receiveAddress) ?? optionalString(row.merchantAddress);
   const fundingAddress =
-    optionalString(row.fundingAddress) ??
-    optionalString(row.omnibusAddress);
+    optionalString(row.fundingAddress) ?? optionalString(row.omnibusAddress);
   return {
     status,
     network,

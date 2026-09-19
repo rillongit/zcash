@@ -39,13 +39,13 @@ zcashd payer + zcashd observer (compose)
   inbound detect: z_viewtransaction / z_listreceivedbyaddress (no stub scanner)
 ```
 
-| Building block | Role | In this repo |
-| --- | --- | --- |
-| ZIP-321 URI | Payment request | `pnpm invoice` / `data/invoice.json` |
-| Shielded hop | Outbound proof, memo = resource_id | `pnpm hop` / `data/hop-proof.json` |
-| Lab 402 | Rill-shaped x402 v2 challenge | `pnpm gate` |
-| Scan contract | Memo match → settled receipt | `pnpm scan` + fixtures |
-| Watch-only observer | Detect pay without spend key | Compose `zcashd-observer` |
+| Building block      | Role                               | In this repo                         |
+| ------------------- | ---------------------------------- | ------------------------------------ |
+| ZIP-321 URI         | Payment request                    | `pnpm invoice` / `data/invoice.json` |
+| Shielded hop        | Outbound proof, memo = resource_id | `pnpm hop` / `data/hop-proof.json`   |
+| Lab 402             | Rill-shaped x402 v2 challenge      | `pnpm gate`                          |
+| Scan contract       | Memo match → settled receipt       | `pnpm scan` + fixtures               |
+| Watch-only observer | Detect pay without spend key       | Compose `zcashd-observer`            |
 
 Orchard/UA detection is CipherPay or nerdcash later, not this lab.
 
@@ -53,16 +53,16 @@ Orchard/UA detection is CipherPay or nerdcash later, not this lab.
 
 Clone and run without the Rill monorepo.
 
-| Capability | Status |
-| --- | --- |
-| ZIP-321 URI, memo = resource_id | `pnpm invoice` / `pnpm decode` |
-| Regtest shielded send | `pnpm hop` (Docker payer) |
-| Watch-only sapling view-key detect | Compose observer + `z_importviewingkey` |
-| Lab `GET /r/{id}` 402 / 200 | `pnpm gate` |
-| Dialect 1 `{ payload: { txid } }` | `PAYMENT-SIGNATURE` |
-| Scanner contract (fixture notes) | `pnpm scan -- --fixture …` |
-| Public Testnet explorer tx | Not yet. `data/testnet-proof.json` points at the regtest hop |
-| Production Rill `zip321` rail | Out of scope until CipherPay testnet verify |
+| Capability                         | Status                                                       |
+| ---------------------------------- | ------------------------------------------------------------ |
+| ZIP-321 URI, memo = resource_id    | `pnpm invoice` / `pnpm decode`                               |
+| Regtest shielded send              | `pnpm hop` (Docker payer)                                    |
+| Watch-only sapling view-key detect | Compose observer + `z_importviewingkey`                      |
+| Lab `GET /r/{id}` 402 / 200        | `pnpm gate`                                                  |
+| Dialect 1 `{ payload: { txid } }`  | `PAYMENT-SIGNATURE`                                          |
+| Scanner contract (fixture notes)   | `pnpm scan -- --fixture …`                                   |
+| Public Testnet explorer tx         | Not yet. `data/testnet-proof.json` points at the regtest hop |
+| Production Rill `zip321` rail      | Out of scope until CipherPay testnet verify                  |
 
 Reproduce without Docker: `pnpm install && pnpm test && pnpm decode`.  
 Reproduce the 402: `pnpm gate`, then the HTTP table in the README.
@@ -80,11 +80,11 @@ CI step 4 uses recorded decrypted notes. Live detect uses the observer, not a si
 
 ## 5. ZIP map
 
-| ZIP | Lab | Later |
-| --- | --- | --- |
-| ZIP-321 | `zcash:` URI, unpadded base64url memo | Same on Testnet / mainnet |
+| ZIP     | Lab                                                           | Later                                |
+| ------- | ------------------------------------------------------------- | ------------------------------------ |
+| ZIP-321 | `zcash:` URI, unpadded base64url memo                         | Same on Testnet / mainnet            |
 | ZIP-316 | Unified address exists; this lab exports the sapling receiver | Orchard/UA via CipherPay or nerdcash |
-| ZIP-307 | Compact blocks omit memos | Not used; observer is full zcashd |
+| ZIP-307 | Compact blocks omit memos                                     | Not used; observer is full zcashd    |
 
 No `zcash://`. No transparent address with a memo.
 

@@ -28,7 +28,8 @@ export function writeLabReceipt(): UnlockResult {
   if (proof.resource_id !== invoice.resource_id) {
     return {
       status: "closed",
-      reason: "Hop resource_id does not match invoice. Re-run pnpm hop && pnpm invoice.",
+      reason:
+        "Hop resource_id does not match invoice. Re-run pnpm hop && pnpm invoice.",
     };
   }
   if (proof.receiveAddress && proof.receiveAddress !== invoice.address) {

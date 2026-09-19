@@ -21,7 +21,10 @@ const server = createServer((req, res) => {
     res.end(
       `${JSON.stringify({
         ok: false,
-        error: { code: "not_found", message: "Lab gate is GET /r/:resource_id" },
+        error: {
+          code: "not_found",
+          message: "Lab gate is GET /r/:resource_id",
+        },
       })}\n`,
     );
     return;
@@ -40,5 +43,7 @@ const server = createServer((req, res) => {
 
 server.listen(port, host, () => {
   console.log(`lab 402 on ${origin}/r/{resource_id}`);
-  console.log("Unpaid until a settled view-key receipt exists (PAYMENT-SIGNATURE txid, pnpm scan, or pnpm unlock -- --lab-stub).");
+  console.log(
+    "Unpaid until a settled view-key receipt exists (PAYMENT-SIGNATURE txid, pnpm scan, or pnpm unlock -- --lab-stub).",
+  );
 });

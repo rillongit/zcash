@@ -43,7 +43,8 @@ export function parseScanNotes(raw: unknown): ScanNotesFile {
     if (!txid || !memo) continue;
     const address = typeof note.address === "string" ? note.address : undefined;
     const confirmations =
-      typeof note.confirmations === "number" && Number.isFinite(note.confirmations)
+      typeof note.confirmations === "number" &&
+      Number.isFinite(note.confirmations)
         ? note.confirmations
         : undefined;
     const amount_zec =
@@ -62,16 +63,22 @@ export function parseScanNotes(raw: unknown): ScanNotesFile {
 }
 
 /** Match a decrypted memo to resource_id. Wrong or missing memo stays closed. */
-export function reconcileNotes(notes: DecryptedNote[], resourceId: string): ScanResult {
+export function reconcileNotes(
+  notes: DecryptedNote[],
+  resourceId: string,
+): ScanResult {
   const id = resourceId.trim();
   if (!id) {
     return { status: "closed", reason: "No resource_id." };
   }
-  const hit = notes.find((note) => memoFieldToUtf8(note.memo_utf8) === id && note.txid);
+  const hit = notes.find(
+    (note) => memoFieldToUtf8(note.memo_utf8) === id && note.txid,
+  );
   if (!hit) {
     return {
       status: "closed",
-      reason: "No decrypted note memo matches resource_id. Unpaid stays closed.",
+      reason:
+        "No decrypted note memo matches resource_id. Unpaid stays closed.",
     };
   }
   const receipt: LabReceipt = {
@@ -98,7 +105,10 @@ export type ScanInvoiceOptions = {
 };
 
 /** Reconcile decrypted notes against the lab invoice and write a scan receipt. */
-export function scanInvoice(notes: DecryptedNote[], options?: ScanInvoiceOptions): ScanResult {
+export function scanInvoice(
+  notes: DecryptedNote[],
+  options?: ScanInvoiceOptions,
+): ScanResult {
   const invoice = readInvoiceFile();
   if (!invoice || invoice.status !== "ready" || !invoice.resource_id) {
     return {
@@ -110,7 +120,9 @@ export function scanInvoice(notes: DecryptedNote[], options?: ScanInvoiceOptions
   if (result.status !== "unlocked" || !result.receipt) return result;
 
   const id = invoice.resource_id.trim();
-  const hit = notes.find((note) => memoFieldToUtf8(note.memo_utf8) === id && note.txid);
+  const hit = notes.find(
+    (note) => memoFieldToUtf8(note.memo_utf8) === id && note.txid,
+  );
   const threshold = settledConfirmations();
   if (typeof hit?.confirmations === "number" && hit.confirmations < threshold) {
     return {

@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { memoBase64UrlToPayoutId, payoutIdToMemoBase64Url } from "../src/memo.js";
+import {
+  memoBase64UrlToPayoutId,
+  payoutIdToMemoBase64Url,
+} from "../src/memo.js";
 import {
   addressAllowsMemo,
   buildZip321Uri,
@@ -58,8 +61,7 @@ test("createInvoice binds resource_id to the URI memo", () => {
 });
 
 test("ZIP-321 round-trips a sapling zregtestsapling address", () => {
-  const sapling =
-    "zregtestsapling1w8k5k9k7j6h5g4f3d2s1a0saplingreceiveaddr";
+  const sapling = "zregtestsapling1w8k5k9k7j6h5g4f3d2s1a0saplingreceiveaddr";
   const resourceId = "33333333-3333-4333-8333-333333333333";
   const uri = buildZip321Uri({
     address: sapling,

@@ -1,5 +1,11 @@
 import assert from "node:assert/strict";
-import { existsSync, mkdirSync, mkdtempSync, unlinkSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  unlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
@@ -21,17 +27,21 @@ const memo = "MTExMTExMTEtMTExMS00MTExLTgxMTEtMTExMTExMTExMTEx";
 
 writeFileSync(
   join(root, "data", "invoice.json"),
-  `${JSON.stringify({
-    resource_id: resourceId,
-    amount_zec: "0.001",
-    address: receiveAddress,
-    uri,
-    memo,
-    network: "regtest",
-    status: "ready",
-    reason: "test",
-    updatedAt: new Date().toISOString(),
-  }, null, 2)}\n`,
+  `${JSON.stringify(
+    {
+      resource_id: resourceId,
+      amount_zec: "0.001",
+      address: receiveAddress,
+      uri,
+      memo,
+      network: "regtest",
+      status: "ready",
+      reason: "test",
+      updatedAt: new Date().toISOString(),
+    },
+    null,
+    2,
+  )}\n`,
 );
 
 function clearReceipt(): void {
@@ -42,10 +52,22 @@ function clearReceipt(): void {
 const fakeObserver: LabObserver = {
   verifyTxid: ({ txid, resourceId: id }) => {
     if (txid === "settled-txid") {
-      return { ok: true, status: "settled", confirmations: 10, reason: "settled", txid };
+      return {
+        ok: true,
+        status: "settled",
+        confirmations: 10,
+        reason: "settled",
+        txid,
+      };
     }
     if (txid === "final-txid") {
-      return { ok: true, status: "final", confirmations: 2, reason: "final", txid };
+      return {
+        ok: true,
+        status: "final",
+        confirmations: 2,
+        reason: "final",
+        txid,
+      };
     }
     if (txid === "wrong-memo") {
       return { ok: false, confirmations: 10, reason: "memo mismatch", txid };
@@ -88,7 +110,10 @@ test("lab gate is 402 unpaid, 404 unknown, 200 only after hop-bound receipt", ()
   assert.equal(accepts[0].maxTimeoutSeconds, 120);
   assert.equal(accepts[0].extra.zip321_uri, uri);
   assert.equal(accepts[0].extra.memo_base64url, memo);
-  assert.equal(accepts[0].extra.caip2, "bip122:029f11d80ef9765602235e1bc9727e3e");
+  assert.equal(
+    accepts[0].extra.caip2,
+    "bip122:029f11d80ef9765602235e1bc9727e3e",
+  );
   assert.deepEqual(accepts[0].extra.payload_dialects, ["txid"]);
   assert.ok(unpaid.headers?.["PAYMENT-REQUIRED"]);
   const required = JSON.parse(
@@ -152,7 +177,10 @@ test("PAYMENT-SIGNATURE txid dialect verifies via injected observer", () => {
     (final.body.payment_status as { status?: string }).status,
     "final",
   );
-  assert.equal((final.body.payment_status as { confirmations?: number }).confirmations, 2);
+  assert.equal(
+    (final.body.payment_status as { confirmations?: number }).confirmations,
+    2,
+  );
   assert.equal(existsSync(join(root, "data", "receipt.json")), false);
 
   const wrongSig = Buffer.from(

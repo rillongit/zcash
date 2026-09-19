@@ -18,9 +18,9 @@ if (!uri) {
     const proof = readHopProof();
     const bound = Boolean(
       proof &&
-        proof.resource_id &&
-        proof.resource_id === decoded.resource_id &&
-        (!proof.receiveAddress || proof.receiveAddress === decoded.address),
+      proof.resource_id &&
+      proof.resource_id === decoded.resource_id &&
+      (!proof.receiveAddress || proof.receiveAddress === decoded.address),
     );
     console.log(
       JSON.stringify(

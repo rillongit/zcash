@@ -24,13 +24,19 @@ function pending(reason: string, extra: Partial<HopProof> = {}): HopProof {
   });
 }
 
-function rpcText(args: string[], node: ZcashNode = "payer"): { ok: boolean; out: string } {
+function rpcText(
+  args: string[],
+  node: ZcashNode = "payer",
+): { ok: boolean; out: string } {
   const result = zcli(args, node);
   const out = `${result.stdout ?? ""}${result.stderr ?? ""}`.trim();
   return { ok: result.status === 0, out };
 }
 
-function rpcJson<T>(args: string[], node: ZcashNode = "payer"): { ok: boolean; value?: T; out: string } {
+function rpcJson<T>(
+  args: string[],
+  node: ZcashNode = "payer",
+): { ok: boolean; value?: T; out: string } {
   const { ok, out } = rpcText(args, node);
   if (!ok) return { ok, out };
   try {
@@ -64,7 +70,12 @@ function saplingZec(account: number): number {
   return zat / 1e8;
 }
 
-function accountSapling(account: number): { ok: boolean; ua?: string; sapling?: string; out: string } {
+function accountSapling(account: number): {
+  ok: boolean;
+  ua?: string;
+  sapling?: string;
+  out: string;
+} {
   const created = rpcJson<{ account?: number }>(["z_getnewaccount"]);
   if (!created.ok && !`${created.out}`.includes("already")) {
     // z_getnewaccount may fail if we just want an existing account
@@ -103,9 +114,14 @@ function opidFrom(out: string, value: unknown): string | undefined {
 
 function waitOp(opid: string): { ok: boolean; txid?: string; out: string } {
   for (let i = 0; i < 90; i += 1) {
-    const result = rpcJson<Array<{ id?: string; status?: string; result?: { txid?: string }; error?: { message?: string } }>>(
-      ["z_getoperationresult", `["${opid}"]`],
-    );
+    const result = rpcJson<
+      Array<{
+        id?: string;
+        status?: string;
+        result?: { txid?: string };
+        error?: { message?: string };
+      }>
+    >(["z_getoperationresult", `["${opid}"]`]);
     if (result.ok && Array.isArray(result.value) && result.value.length > 0) {
       const op = result.value[0];
       if (op.status === "success" && op.result?.txid) {
@@ -134,17 +150,28 @@ function exportViewingKey(address: string): string | undefined {
 }
 
 function importViewingKey(vk: string): boolean {
-  const result = zcli(["z_importviewingkey", vk, "whenkeyisnew", "0"], "observer");
+  const result = zcli(
+    ["z_importviewingkey", vk, "whenkeyisnew", "0"],
+    "observer",
+  );
   return result.status === 0;
 }
 
 function waitObserverCatchup(attempts: number): boolean {
   for (let i = 0; i < attempts; i += 1) {
     const payer = rpcJson<{ blocks?: number }>(["getblockchaininfo"], "payer");
-    const observer = rpcJson<{ blocks?: number }>(["getblockchaininfo"], "observer");
+    const observer = rpcJson<{ blocks?: number }>(
+      ["getblockchaininfo"],
+      "observer",
+    );
     const payerBlocks = payer.value?.blocks ?? 0;
     const observerBlocks = observer.value?.blocks ?? 0;
-    if (payer.ok && observer.ok && payerBlocks > 0 && observerBlocks >= payerBlocks) {
+    if (
+      payer.ok &&
+      observer.ok &&
+      payerBlocks > 0 &&
+      observerBlocks >= payerBlocks
+    ) {
       return true;
     }
     Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 2000);
@@ -152,7 +179,11 @@ function waitObserverCatchup(attempts: number): boolean {
   return false;
 }
 
-function resolveReceiveSapling(): { ok: boolean; sapling?: string; out: string } {
+function resolveReceiveSapling(): {
+  ok: boolean;
+  sapling?: string;
+  out: string;
+} {
   const uaReceive = accountSapling(1);
   if (uaReceive.ok && uaReceive.sapling) {
     const vk = exportViewingKey(uaReceive.sapling);
@@ -171,7 +202,11 @@ function resolveReceiveSapling(): { ok: boolean; sapling?: string; out: string }
   }
   const vk = exportViewingKey(sapling);
   if (!vk) {
-    return { ok: false, sapling, out: "z_exportviewingkey failed on sapling address" };
+    return {
+      ok: false,
+      sapling,
+      out: "z_exportviewingkey failed on sapling address",
+    };
   }
   if (!importViewingKey(vk)) {
     return { ok: false, sapling, out: "observer z_importviewingkey failed" };
@@ -251,7 +286,10 @@ export function runHop(): HopProof {
     }
     const shieldWait = waitOp(shieldOp);
     if (!shieldWait.ok) {
-      return pending(`z_shieldcoinbase op failed: ${shieldWait.out}`, addresses);
+      return pending(
+        `z_shieldcoinbase op failed: ${shieldWait.out}`,
+        addresses,
+      );
     }
     generateBlocks(1);
   }

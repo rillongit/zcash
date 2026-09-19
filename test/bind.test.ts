@@ -30,7 +30,10 @@ test("hop proof and invoice share resource_id memo and receive UA", () => {
   assert.equal(invoice.resource_id, resourceId);
   assert.equal(invoice.address, receiveAddress);
   assert.equal(invoice.memo, memos.memo_base64url);
-  assert.equal(memoBase64UrlToPayoutId(parseZip321Uri(invoice.uri).memo), resourceId);
+  assert.equal(
+    memoBase64UrlToPayoutId(parseZip321Uri(invoice.uri).memo),
+    resourceId,
+  );
 });
 
 test("legacy testnet-proof payoutId maps to resource_id and receive UA", () => {

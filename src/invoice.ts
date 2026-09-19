@@ -22,7 +22,10 @@ export function createInvoice(input: {
   amountZec: string;
   address: string;
   message?: string;
-}): Pick<Zip321Invoice, "resource_id" | "amount_zec" | "address" | "uri" | "memo"> {
+}): Pick<
+  Zip321Invoice,
+  "resource_id" | "amount_zec" | "address" | "uri" | "memo"
+> {
   const uri = buildZip321Uri({
     address: input.address,
     amount: input.amountZec,
@@ -73,8 +76,12 @@ function writePending(reason: string): Zip321Invoice {
   return pending;
 }
 
-function sniffNetwork(address: string, proofNetwork?: HopProof["network"]): Zip321Invoice["network"] {
-  if (proofNetwork === "testnet" || proofNetwork === "regtest") return proofNetwork;
+function sniffNetwork(
+  address: string,
+  proofNetwork?: HopProof["network"],
+): Zip321Invoice["network"] {
+  if (proofNetwork === "testnet" || proofNetwork === "regtest")
+    return proofNetwork;
   if (address.startsWith("uregtest") || address.startsWith("zregtestsapling")) {
     return "regtest";
   }

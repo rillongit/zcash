@@ -3,11 +3,7 @@ import { memoBase64UrlToPayoutId } from "./memo.js";
 import { dataDir, invoicePath, receiptPath } from "./paths.js";
 import type { Zip321Invoice } from "./invoice.js";
 import { parseZip321Uri } from "./zip321.js";
-import {
-  liveObserver,
-  zecToZatoshis,
-  type LabObserver,
-} from "./observer.js";
+import { liveObserver, zecToZatoshis, type LabObserver } from "./observer.js";
 
 export { zecToZatoshis };
 export type { LabObserver };
@@ -77,7 +73,10 @@ export function parseReceiptSource(value: unknown): ReceiptSource {
   return "lab-stub";
 }
 
-export function receiptIdFor(source: ReceiptSource, resourceId: string): string {
+export function receiptIdFor(
+  source: ReceiptSource,
+  resourceId: string,
+): string {
   switch (source) {
     case "scan":
       return `rcpt_zcash_${resourceId.slice(0, 8)}`;
@@ -101,14 +100,16 @@ export function readReceiptFile(): LabReceipt | null {
   if (!raw || typeof raw !== "object") return null;
   const row = raw as Partial<LabReceipt>;
   if (!row.resource_id || !row.receipt_id || !row.txid) return null;
-  const status = row.status === "final" || row.status === "settled" ? row.status : undefined;
+  const status =
+    row.status === "final" || row.status === "settled" ? row.status : undefined;
   return {
     resource_id: row.resource_id,
     receipt_id: row.receipt_id,
     txid: row.txid,
     source: parseReceiptSource(row.source),
     status,
-    confirmations: typeof row.confirmations === "number" ? row.confirmations : undefined,
+    confirmations:
+      typeof row.confirmations === "number" ? row.confirmations : undefined,
     network: typeof row.network === "string" ? row.network : undefined,
     observer: typeof row.observer === "string" ? row.observer : undefined,
   };
@@ -133,7 +134,9 @@ function decodeJson(raw: string): unknown | null {
 }
 
 /** CipherPay dialect 1: `{ payload: { txid } }` as JSON or base64 JSON. */
-export function parsePaymentSignatureTxid(raw: string | undefined): string | undefined {
+export function parsePaymentSignatureTxid(
+  raw: string | undefined,
+): string | undefined {
   if (!raw?.trim()) return undefined;
   const trimmed = raw.trim();
   let parsed = decodeJson(trimmed);
@@ -233,7 +236,9 @@ function receiptBody(id: string, receipt: LabReceipt): Record<string, unknown> {
     txid: receipt.txid,
     source: receipt.source,
     ...(receipt.status ? { status: receipt.status } : {}),
-    ...(typeof receipt.confirmations === "number" ? { confirmations: receipt.confirmations } : {}),
+    ...(typeof receipt.confirmations === "number"
+      ? { confirmations: receipt.confirmations }
+      : {}),
     ...(receipt.network ? { network: receipt.network } : {}),
     ...(receipt.observer ? { observer: receipt.observer } : {}),
   };
@@ -246,7 +251,12 @@ export function handleLabGate(
 ): LabGateResult {
   const id = resourceId.trim();
   const invoice = readInvoiceFile();
-  if (!invoice || invoice.status !== "ready" || !invoice.uri || invoice.resource_id !== id) {
+  if (
+    !invoice ||
+    invoice.status !== "ready" ||
+    !invoice.uri ||
+    invoice.resource_id !== id
+  ) {
     return {
       status: 404,
       body: {

@@ -18,10 +18,10 @@ Not wired to live Rill or lomi. APIs until the invoice plus view-key path is pro
 
 ## Products
 
-| Product | URL | Role |
-| --- | --- | --- |
-| Rill | https://userill.com | Agent Accept. ZIP-321 is the new rail. |
-| lomi. | https://lomi.africa | Optional last mile later. |
+| Product | URL                 | Role                                   |
+| ------- | ------------------- | -------------------------------------- |
+| Rill    | https://userill.com | Agent Accept. ZIP-321 is the new rail. |
+| lomi.   | https://lomi.africa | Optional last mile later.              |
 
 ## What is in here
 
@@ -67,9 +67,9 @@ pnpm decode
 pnpm gate
 ```
 
-| Method | Path | Notes |
-| --- | --- | --- |
-| `GET` | `/r/:resource_id` | **402** + `zip321_uri` + `accepts[]` unpaid. **200** after settled scan or dialect-1 txid. **404** unknown |
+| Method | Path              | Notes                                                                                                      |
+| ------ | ----------------- | ---------------------------------------------------------------------------------------------------------- |
+| `GET`  | `/r/:resource_id` | **402** + `zip321_uri` + `accepts[]` unpaid. **200** after settled scan or dialect-1 txid. **404** unknown |
 
 ```json
 {
@@ -110,13 +110,13 @@ CI on `main` runs typecheck + test. Tests do not need Docker or proving params.
 
 ## Local data
 
-| Path | Purpose |
-| --- | --- |
-| `data/invoice.json` | Bound ZIP-321 invoice (committed) |
-| `data/hop-proof.json` | Regtest shielded hop (committed) |
+| Path                      | Purpose                                         |
+| ------------------------- | ----------------------------------------------- |
+| `data/invoice.json`       | Bound ZIP-321 invoice (committed)               |
+| `data/hop-proof.json`     | Regtest shielded hop (committed)                |
 | `data/testnet-proof.json` | Pointer at `hop-proof.json`. Not public Testnet |
-| `data/receipt.json` | Unlock JSON (gitignored) |
-| `keys/` / `.env` | Secrets (never commit viewing keys) |
+| `data/receipt.json`       | Unlock JSON (gitignored)                        |
+| `keys/` / `.env`          | Secrets (never commit viewing keys)             |
 
 ## Notes
 

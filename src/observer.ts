@@ -82,7 +82,10 @@ function outputMemoUtf8(row: Record<string, unknown>): string {
   return "";
 }
 
-function rpcJson(args: string[], node: "payer" | "observer"): { ok: boolean; value?: unknown; out: string } {
+function rpcJson(
+  args: string[],
+  node: "payer" | "observer",
+): { ok: boolean; value?: unknown; out: string } {
   const result = zcli(args, node);
   const out = `${result.stdout ?? ""}${result.stderr ?? ""}`.trim();
   if (result.status !== 0) return { ok: false, out };
@@ -97,13 +100,19 @@ function fetchConfirmations(txid: string): number {
   const verbose = rpcJson(["getrawtransaction", txid, "1"], "observer");
   if (verbose.ok) {
     const row = asRecord(verbose.value);
-    if (typeof row?.confirmations === "number" && Number.isFinite(row.confirmations)) {
+    if (
+      typeof row?.confirmations === "number" &&
+      Number.isFinite(row.confirmations)
+    ) {
       return row.confirmations;
     }
   }
   const wallet = rpcJson(["gettransaction", txid], "observer");
   const row = asRecord(wallet.value);
-  if (typeof row?.confirmations === "number" && Number.isFinite(row.confirmations)) {
+  if (
+    typeof row?.confirmations === "number" &&
+    Number.isFinite(row.confirmations)
+  ) {
     return row.confirmations;
   }
   return 0;
@@ -124,7 +133,8 @@ export function notesFromListReceived(raw: unknown): DecryptedNote[] {
     const memo = typeof row.memo === "string" ? memoFieldToUtf8(row.memo) : "";
     if (!txid || !memo) continue;
     const confirmations =
-      typeof row.confirmations === "number" && Number.isFinite(row.confirmations)
+      typeof row.confirmations === "number" &&
+      Number.isFinite(row.confirmations)
         ? row.confirmations
         : undefined;
     let amount_zec: string | undefined;
@@ -132,7 +142,8 @@ export function notesFromListReceived(raw: unknown): DecryptedNote[] {
       amount_zec = row.amount.toFixed(8).replace(/\.?0+$/, "") || "0";
       if (amount_zec.endsWith(".")) amount_zec = amount_zec.slice(0, -1);
       if (!amount_zec.includes(".")) {
-        amount_zec = typeof row.amount === "number" ? String(row.amount) : amount_zec;
+        amount_zec =
+          typeof row.amount === "number" ? String(row.amount) : amount_zec;
       }
     } else if (typeof row.amount === "string" && row.amount.trim()) {
       amount_zec = row.amount.trim();

@@ -10,10 +10,18 @@ import { handleLabGate } from "../src/gate.js";
 import { loadNotesFromFixture, loadScanNotes } from "../src/sidecar.js";
 import { notesFromListReceived } from "../src/observer.js";
 
-const matchPath = fileURLToPath(new URL("./fixtures/scan-notes.match.json", import.meta.url));
-const mismatchPath = fileURLToPath(new URL("./fixtures/scan-notes.mismatch.json", import.meta.url));
-const emptyPath = fileURLToPath(new URL("./fixtures/scan-notes.empty.json", import.meta.url));
-const compactPath = fileURLToPath(new URL("./fixtures/compact-block.json", import.meta.url));
+const matchPath = fileURLToPath(
+  new URL("./fixtures/scan-notes.match.json", import.meta.url),
+);
+const mismatchPath = fileURLToPath(
+  new URL("./fixtures/scan-notes.mismatch.json", import.meta.url),
+);
+const emptyPath = fileURLToPath(
+  new URL("./fixtures/scan-notes.empty.json", import.meta.url),
+);
+const compactPath = fileURLToPath(
+  new URL("./fixtures/compact-block.json", import.meta.url),
+);
 const observerListPath = fileURLToPath(
   new URL("./fixtures/observer-listreceived.json", import.meta.url),
 );
@@ -71,7 +79,10 @@ test("observer z_listreceivedbyaddress fixture maps via notesFromListReceived", 
   );
   assert.equal(notes[0]?.memo_utf8, resourceId);
   assert.equal(notes[0]?.confirmations, 10);
-  assert.equal(notes[0]?.address, "zregtestsapling1w8k5k9k7j6h5g4f3d2s1a0observernote");
+  assert.equal(
+    notes[0]?.address,
+    "zregtestsapling1w8k5k9k7j6h5g4f3d2s1a0observernote",
+  );
 });
 
 test("scan receipt is the only path that 200s the gate without a lab-stub", () => {
@@ -83,17 +94,21 @@ test("scan receipt is the only path that 200s the gate without a lab-stub", () =
   const uri = `zcash:${receiveAddress}?amount=0.001&memo=YzY5Yjk4YjgtNGY2OS00NWEyLWFkZmEtYjhkODA3MmI0NGFk`;
   writeFileSync(
     join(root, "data", "invoice.json"),
-    `${JSON.stringify({
-      resource_id: resourceId,
-      amount_zec: "0.001",
-      address: receiveAddress,
-      uri,
-      memo: "YzY5Yjk4YjgtNGY2OS00NWEyLWFkZmEtYjhkODA3MmI0NGFk",
-      network: "regtest",
-      status: "ready",
-      reason: "test",
-      updatedAt: new Date().toISOString(),
-    }, null, 2)}\n`,
+    `${JSON.stringify(
+      {
+        resource_id: resourceId,
+        amount_zec: "0.001",
+        address: receiveAddress,
+        uri,
+        memo: "YzY5Yjk4YjgtNGY2OS00NWEyLWFkZmEtYjhkODA3MmI0NGFk",
+        network: "regtest",
+        status: "ready",
+        reason: "test",
+        updatedAt: new Date().toISOString(),
+      },
+      null,
+      2,
+    )}\n`,
   );
 
   assert.equal(handleLabGate(resourceId).status, 402);
@@ -106,7 +121,10 @@ test("scan receipt is the only path that 200s the gate without a lab-stub", () =
   assert.equal(handleLabGate(resourceId).status, 402);
 
   const match = parseScanNotes(JSON.parse(readFileSync(matchPath, "utf8")));
-  const opened = scanInvoice(match.notes, { observer: "fixture", network: "regtest" });
+  const opened = scanInvoice(match.notes, {
+    observer: "fixture",
+    network: "regtest",
+  });
   assert.equal(opened.status, "unlocked");
   assert.equal(opened.receipt?.status, "settled");
   const paid = handleLabGate(resourceId);
