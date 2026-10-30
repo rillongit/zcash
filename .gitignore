@@ -1,6 +1,5 @@
 node_modules
 dist
-/target
 .env
 keys/
 data/*
@@ -16,3 +15,5 @@ wallet.dat
 zcash-data
 zcash-params
 *.pem
+
+/target

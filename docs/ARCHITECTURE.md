@@ -1,59 +1,126 @@
-# Architecture
+# Technical architecture: ZIP-321 Accept (Rill)
 
-The spending key is a FROST 2-of-3 group over the RedPallas ciphersuite used for Orchard spend authorization (ZIP 312). The signature is re-randomized. The randomizer is the PCZT spend alpha, not a seed chosen later. A plain FROST signature would not verify against the randomized verifying key.
+**Repo:** [github.com/rillongit/zcash](https://github.com/rillongit/zcash)  
+**Product:** [Rill](https://userill.com)  
+**Network:** honest **regtest**. Public Testnet is later, against CipherPay `POST /api/x402/v2/verify`.  
+**Grant:** [ZCG issue 425](https://github.com/ZcashCommunityGrants/zcashcommunitygrants/issues/425)
 
-## Shares
+Rill already returns HTTP 402 for unpaid Accept (MPP / x402). This lab adds a shielded `zcash:` invoice so an agent can pay a Rill resource without a public graph. It is not wired to live Rill or lomi. APIs.
 
-| Id | Holder | What it can do |
-| --- | --- | --- |
-| 1 | The agent's own machine | Propose a PCZT. Hold one share. Cannot spend alone. |
-| 2 | A separate policy service | Decode the PCZT. Check the mandate. Sign only on allow. |
-| 3 | The user | Recovery, and the second share for a payment above the cap. |
+## 1. Goal
 
-The policy service does not sign a payment that needs the user. Agent plus user is that path. The policy share stays out of it.
+- Agent hits `GET /r/{id}` unpaid and gets 402 plus a ZIP-321 URI and an x402 v2 `accepts[]` challenge.
+- Sapling address, amount, memo = `resource_id`.
+- Human Zashi (or a later Spend path) pays shielded.
+- Seller watches with a sapling viewing key on a watch-only zcashd observer. Spend keys stay off the server. No own scanner.
+- Unlock is a receipt `{ resource_id, receipt_id, txid, status }` in the same shape as MPP / x402. Production-style goods unlock only on `settled`.
 
-A trusted dealer exists for tests. It sees every share, so production setup is the three-round distributed key generation in `cosigner`. After key generation the group verifying key is forced to even Y, and the share is negated with it. The draft FROST member backup (the Zkool `zkfrost` string) does the same. Skipping it exports a bad share about half the time.
+Fiat last mile on [lomi.](https://lomi.africa) is later, not this lab. Production Rill rails stay `mpp | x402 | rill` until this path is proven.
 
-## PCZT
+## 2. System overview
 
-The wallet engine is not in this repo. Construction and note selection stay in `zcash_client_backend` with lightwalletd or Zaino, or in a caller that already has a PCZT (Zashi, or the Zcash Foundation `zcash-sign` tool). This repo inspects that PCZT with the `pczt` crate and co-signs the shielded sighash.
+```
+Agent or human
+  GET /r/{resource_id}
+        |
+        v
+This lab (regtest)
+  402 + zcash: URI + accepts[]     unpaid
+  402 + payment_status             final (seen, not settled)
+  200 + receipt JSON               settled scan or dialect-1 txid
+        |
+        v
+ZIP-321
+  memo = resource_id (base64url on the URI, hex on the hop)
+        |
+        v
+zcashd payer + zcashd observer (compose)
+  outbound hop: pnpm hop (sapling send, export viewing key, import on observer)
+  inbound detect: z_viewtransaction / z_listreceivedbyaddress (no stub scanner)
+```
 
-`pczt-inspect` reads Orchard and Ironwood actions through the low-level signer role, which is the path that exposes spend values, alpha, and the value-commitment trapdoor. It then:
+| Building block      | Role                               | In this repo                         |
+| ------------------- | ---------------------------------- | ------------------------------------ |
+| ZIP-321 URI         | Payment request                    | `pnpm invoice` / `data/invoice.json` |
+| Shielded hop        | Outbound proof, memo = resource_id | `pnpm hop` / `data/hop-proof.json`   |
+| Lab 402             | Rill-shaped x402 v2 challenge      | `pnpm gate`                          |
+| Scan contract       | Memo match → settled receipt       | `pnpm scan` + fixtures               |
+| Watch-only observer | Detect pay without spend key       | Compose `zcashd-observer`            |
 
-- rejects a spend that still carries `dummy_sk` (ZIP 374)
-- rejects an output whose value or recipient is missing
-- checks that `user_address` is a unified address containing the Orchard receiver
-- recomputes the action value commitment from the explicit values and the trapdoor, and compares it to `cv_net`
-- checks that the sum of explicit nets matches the bundle value sum
-- flags transparent inputs or outputs, Sapling value, and a PCZT that moves value in both Orchard and Ironwood
+Orchard/UA detection is CipherPay or nerdcash later, not this lab.
 
-The fee is the non-negative bundle value sum (spends minus outputs). The bool on the PCZT value sum is the sign. An empty bundle is `(0, false)`, so `false` means the magnitude is non-negative. A negative sum is refused.
+## 3. What runs today
 
-Change is not a flag on the output. The mandate's `change_address` is the only change address. Any other address must be on the allowlist. An output to some other address is a refusal, including one a proposer might call change.
+Clone and run without the Rill monorepo.
 
-## Mandate
+| Capability                         | Status                                                       |
+| ---------------------------------- | ------------------------------------------------------------ |
+| ZIP-321 URI, memo = resource_id    | `pnpm invoice` / `pnpm decode`                               |
+| Regtest shielded send              | `pnpm hop` (Docker payer)                                    |
+| Watch-only sapling view-key detect | Compose observer + `z_importviewingkey`                      |
+| Lab `GET /r/{id}` 402 / 200        | `pnpm gate`                                                  |
+| Dialect 1 `{ payload: { txid } }`  | `PAYMENT-SIGNATURE`                                          |
+| Scanner contract (fixture notes)   | `pnpm scan -- --fixture …`                                   |
+| Public Testnet explorer tx         | Not yet. `data/testnet-proof.json` points at the regtest hop |
+| Production Rill `zip321` rail      | Out of scope until CipherPay testnet verify                  |
 
-The shape follows the Open Wallet Standard policy engine: an expiry, and a check that runs before a signature. OWS declarative rules do not carry a per-payment cap or a recipient allowlist, and they decrypt the key in the same process that asked. Those checks live in `mandate::evaluate`.
+Reproduce without Docker: `pnpm install && pnpm test && pnpm decode`.  
+Reproduce the 402: `pnpm gate`, then the HTTP table in the README.
 
-Order:
+## 4. Settlement flow
 
-1. Expiry unset or in the past: refuse.
-2. Sighash already signed: refuse.
-3. Transparent, Sapling, both pools, dummy key, redacted value, unbound recipient, value not bound to `cv`: refuse.
-4. Address that is not change and not on the allowlist: refuse.
-5. Memo longer than the cap, a memo that does not match `memo_exact`, or a required memo that is not visible: refuse.
-6. Fee missing or above `fee_cap`: refuse.
-7. Amount above the per-payment, daily, or total cap: needs the user.
-8. Otherwise allow.
+1. Bind a hop and invoice so memo and receive address match (`pnpm hop && pnpm invoice`).
+2. Agent `GET /r/{resource_id}` with no receipt → **402** + `zip321_uri` + `accepts[]`.
+3. Human pays the URI on a matching network (Zashi). Lab URIs are **regtest**.
+4. Detect: observer `z_viewtransaction` / `z_listreceivedbyaddress` with the imported sapling viewing key. Match address, memo = `resource_id`, amount >= expected.
+5. `final` (confirmations >= 1, below threshold) stays **402** with `payment_status`. `settled` writes `data/receipt.json`. Next GET is **200**.
+6. Unknown ids stay **404**. Wrong memo stays **402**.
 
-A fee-only payment back to the change address is an allow, inside the fee cap. A payment of zero with a zero fee is a refusal.
+CI step 4 uses recorded decrypted notes. Live detect uses the observer, not a sidecar crate.
 
-The daily window is a date string the caller supplies, in the user's time zone. This crate does not guess a zone.
+## 5. ZIP map
 
-## Replay
+| ZIP     | Lab                                                           | Later                                |
+| ------- | ------------------------------------------------------------- | ------------------------------------ |
+| ZIP-321 | `zcash:` URI, unpadded base64url memo                         | Same on Testnet / mainnet            |
+| ZIP-316 | Unified address exists; this lab exports the sapling receiver | Orchard/UA via CipherPay or nerdcash |
+| ZIP-307 | Compact blocks omit memos                                     | Not used; observer is full zcashd    |
 
-Signing nonces are one-time. `ReplayGuard` refuses a sighash or a commitment id it has already seen. Returning a cached signature for the same sighash is the service's job. It must not sign again.
+No `zcash://`. No transparent address with a memo.
 
-## Out of scope
+## 6. Data model
 
-Scanning, proving, and broadcasting through lightwalletd are out of scope. x402 and MPP settlement stay with the facilitator the caller already uses. This profile adds an automated co-signer. It does not add a new payment rail.
+Lab files (see README). Receipt shape:
+
+```
+resource_id, receipt_id, txid, source (scan | lab-stub)
+optional: status (final | settled), confirmations, network, observer
+```
+
+`source: scan` with `status: settled` is the paid path. `source: lab-stub` copies the hop txid for reviewers and never reports settled.
+
+## 7. Infra
+
+- Payer `zcashd` regtest (`rill-zcashd-regtest`). RPC user `rill`. Listens on P2P 18444.
+- Observer `zcashd` (`rill-zcashd-observer`) is watch-only: `-listen=0`, `-connect=zcashd`, host RPC `127.0.0.1:18233`. Shares proving params with the payer. No `lightwalletd`.
+- Hop exports a sapling viewing key on the payer and imports it on the observer (`whenkeyisnew`, height 0). The key is never written under `data/` or logs.
+- Never commit viewing keys or spend keys.
+
+## 8. Custody
+
+- Seller viewing key only. Never a spend key on the server.
+- Lab: gitignored `.env` / `keys/` / zcashd datadir.
+- Live: HSM/KMS later. New mainnet addresses. Never reuse testnet secrets.
+
+## 9. If we take this live
+
+See [BUILD-PHASES.md](./BUILD-PHASES.md). Short version:
+
+1. Keep this repo public: invoice, hop proof, decode, lab 402, observer contract.
+2. Reuse detection. Do not write a scanner.
+3. Next: testnet against CipherPay `POST /api/x402/v2/verify`.
+4. Adapter notes for Rill Accept. No production Spend rewrite in the grant.
+
+## 10. Adapter notes
+
+Field map to Rill Accept: [RILL-INTEGRATION-CONTRACT.md](./RILL-INTEGRATION-CONTRACT.md).
