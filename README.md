@@ -1,12 +1,14 @@
 # zcash
 
+**This repo has moved to [lomiafrica/cosigner](https://github.com/lomiafrica/cosigner). Development continues there. This copy is not maintained.**
+
 A FROST 2-of-3 co-signer for a shielded Zcash agent, and a small ZIP-321 receive helper.
 
 An agent that holds its own spending key can ignore its spending limits. This repo splits that key. The agent holds one share. A separate policy service holds the second share and signs only after it has decoded the PCZT itself. The user holds the third share, for recovery and for payments above the cap.
 
 Two shares are enough to spend. The agent alone is not.
 
-The ZIP-321 Accept lab that this repository used to be is still here, under `legacy/accept-lab/`. The tag `accept-lab-v0` points at that lab.
+The ZIP-321 Accept lab that this repository used to be is still here, under `legacy/accept-lab/`. Commit `80ec30a` is that lab before the move.
 
 ## Crates
 
