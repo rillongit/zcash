@@ -1,20 +1,15 @@
 # Contributing
 
-This is the Rill ZIP-321 Accept lab. Keep it small. Do not wire live Rill or lomi. payouts from here.
+Rust follows the librustzcash house style.
 
-## Code
+- `cargo fmt` before a review.
+- `cargo clippy --workspace --all-targets -- -D warnings` stays clean.
+- `cargo test --workspace` is the check that matters.
+- Library paths return `Result`. `unwrap` belongs in tests.
+- Do not log a share, a nonce, a viewing key, or alpha.
+- Comments say why. They do not restate the line.
+- New mandate behavior needs a vector in `spec/vectors/mandate.json` and a test that loads it.
 
-- TypeScript, `pnpm typecheck` before a PR.
-- Docs live next to the code (`docs/`). Keep README, REVIEW.md, and ARCHITECTURE honest about regtest vs Testnet.
-- Shielded ZIP-321 receive. Memo = `resource_id`. Spend keys stay off the server.
-- Fail closed if the invoice cannot be built.
-- Never commit `.env`, `keys/`, `wallet.dat`, zcashd datadir contents, viewing keys, or spend keys.
-- Detection is the watch-only observer. Do not add a scanner crate.
+The TypeScript in `src/` is the ZIP-321 receive helper. `pnpm test` covers it. The old Accept lab under `legacy/accept-lab/` is frozen. Do not add features there.
 
-## Git
-
-- Branch from `main`. Open a pull request.
-- Commits explain why, not a file list.
-- Do not rewrite published `main`.
-
-Style follows the spirit of the [librustzcash contributing guide](https://github.com/zcash/librustzcash/blob/main/CONTRIBUTING.md): small diffs, reviewable history, no protocol fork unless ZCG and upstream agree.
+Write in plain sentences. Do not use an em dash.

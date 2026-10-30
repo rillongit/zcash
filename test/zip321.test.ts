@@ -9,7 +9,6 @@ import {
   buildZip321Uri,
   parseZip321Uri,
 } from "../src/zip321.js";
-import { createInvoice } from "../src/invoice.js";
 
 const UA =
   "uregtest1ma4nrsg5fn6ucrguedj7k08tyk48tsaru4m8f02syrwgdgfap5zhkwkwvuzcegtecwk29m7e3u6hgvcwuc7sx802egc3dem4z532w6cd5978uau9n8h3c2gg9shjxpwevs8nu4qmadtew6qcztdn4cyx3a7pqqa0576nm9gquvjfw3sng5e57fupnvmxmpgkyq7y62gc2rccvjetucj";
@@ -46,18 +45,6 @@ test("ZIP-321 rejects transparent address with memo", () => {
       resourceId: "x",
     }),
   );
-});
-
-test("createInvoice binds resource_id to the URI memo", () => {
-  const resourceId = "22222222-2222-4222-8222-222222222222";
-  const invoice = createInvoice({
-    resourceId,
-    amountZec: "0.001",
-    address: UA,
-  });
-  assert.equal(invoice.resource_id, resourceId);
-  assert.equal(memoBase64UrlToPayoutId(invoice.memo), resourceId);
-  assert.equal(parseZip321Uri(invoice.uri).address, UA);
 });
 
 test("ZIP-321 round-trips a sapling zregtestsapling address", () => {

@@ -1,7 +1,7 @@
 {
   "name": "@userill/zcash",
-  "version": "0.1.0",
-  "description": "Shielded ZIP-321 invoices for Rill Accept",
+  "version": "0.2.0",
+  "description": "FROST 2-of-3 co-signer for a Zcash agent, plus ZIP-321 receive helpers",
   "private": false,
   "license": "MIT",
   "type": "module",
@@ -9,14 +9,6 @@
     "node": ">=20.11.1"
   },
   "scripts": {
-    "hop": "tsx scripts/hop.ts",
-    "proof": "tsx scripts/hop.ts",
-    "invoice": "tsx scripts/invoice.ts",
-    "decode": "tsx scripts/decode.ts",
-    "gate": "tsx scripts/gate.ts",
-    "scan": "tsx scripts/scan.ts",
-    "unlock": "tsx scripts/unlock.ts",
-    "up": "docker compose up -d",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "tsx --test --test-concurrency=1 test/*.test.ts"
   },
@@ -24,5 +16,8 @@
     "@types/node": "^22.20.1",
     "tsx": "^4.23.13",
     "typescript": "^5.9.3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild"]
   }
 }
